@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo } from "react";
-import { Monitor, Loader2, PlayCircle } from "lucide-react";
+import { PlayCircle } from "lucide-react";
 import { useUIStore } from "@/lib/store/useUIStore";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,7 @@ interface LivePreviewProps {
 /**
  * LivePreview component that compiles and executes React + Tailwind code strings.
  * Renders the interface in a sandboxed iframe with responsive width limits mapping to useUIStore.
+ * Streams generated code chunks in real-time without locking workspace view during stream phase.
  */
 export function LivePreview({ code, isLoading }: LivePreviewProps) {
   const viewMode = useUIStore((state) => state.viewMode);
@@ -79,8 +80,8 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
     } catch (err) {
       document.getElementById('root').innerHTML = \`
         <div class="p-6 m-4 border-2 border-dashed border-red-200 bg-red-50 rounded-2xl text-center">
-          <h3 class="text-red-800 font-bold text-sm">Preview Sandbox Error</h3>
-          <p class="text-red-600 text-xs mt-2 font-mono text-left bg-white p-3 border border-red-100 rounded-lg overflow-auto max-h-[250px]">\${err.message}</p>
+          <h3 class="text-red-800 font-bold text-sm">Preview Sandbox Compiling...</h3>
+          <p class="text-red-650 text-xs mt-2 font-mono text-left bg-white p-3 border border-red-100 rounded-lg overflow-auto max-h-[250px]">\${err.message}</p>
         </div>
       \`;
     }
@@ -96,17 +97,20 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
     desktop: "max-w-full",
   };
 
+  // Check if we are currently loading without code (initial plan phase)
+  const showLoadingOverlay = isLoading && !code;
+
   return (
     <div className="flex-1 flex flex-col items-center justify-center bg-slate-50/50 relative overflow-hidden h-full min-h-[300px]">
-      {/* 1. Active Generation Loading Overlay */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-3">
+      {/* 1. Active Generation Loading Overlay (only shown before code stream begins) */}
+      {showLoadingOverlay && (
+        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex flex-col items-center justify-center gap-3 animate-in fade-in duration-200">
           <LoadingSpinner size="lg" />
           <div className="text-center space-y-1">
             <span className="text-xs font-extrabold text-indigo-600 uppercase tracking-widest animate-pulse">
-              Compiling React DOM...
+              Planning Layouts...
             </span>
-            <p className="text-[10px] text-slate-400 font-medium">Babel Sandbox compiling component node tree</p>
+            <p className="text-[10px] text-slate-400 font-medium">Babel Sandbox preparing compilation layer</p>
           </div>
         </div>
       )}
@@ -115,7 +119,7 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
       {code ? (
         <div
           className={cn(
-            "w-full h-full flex flex-col items-center justify-center p-4 transition-all duration-300",
+            "w-full h-full flex flex-col items-center justify-center transition-all duration-300",
             activeClass(viewMode)
           )}
         >
@@ -130,7 +134,7 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
         </div>
       ) : (
         /* Empty Sandbox Panel */
-        <div className="p-8 text-center max-w-sm flex flex-col items-center gap-4">
+        <div className="p-8 text-center max-w-sm flex flex-col items-center gap-4 animate-in fade-in duration-300">
           <div className="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center text-slate-400">
             <PlayCircle className="w-6 h-6 stroke-[1.5]" />
           </div>

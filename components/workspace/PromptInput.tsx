@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -16,10 +16,49 @@ interface PromptInputProps {
 /**
  * PromptInput component for natural language design instructions.
  * Incorporates high-fidelity textareas, character limit validation, and active loading buttons.
+ * Displays real-time SSE stream status events ("Planning...", "Generating...", "Done!").
  */
 export function PromptInput({ onSubmit, isLoading, placeholder }: PromptInputProps) {
   const [prompt, setPrompt] = useState("");
+  const [statusMessage, setStatusMessage] = useState("Generating...");
   const maxLength = 500;
+
+  useEffect(() => {
+    if (!isLoading) {
+      setStatusMessage("Generating...");
+      return;
+    }
+
+    const handlePlan = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      setStatusMessage(customEvent.detail || "Planning your UI...");
+    };
+
+    const handleChunk = () => {
+      setStatusMessage("Generating components...");
+    };
+
+    const handleDone = () => {
+      setStatusMessage("Done!");
+    };
+
+    const handleError = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      setStatusMessage(`Error: ${customEvent.detail}`);
+    };
+
+    window.addEventListener("generation-plan", handlePlan);
+    window.addEventListener("generation-chunk", handleChunk);
+    window.addEventListener("generation-done", handleDone);
+    window.addEventListener("generation-error", handleError);
+
+    return () => {
+      window.removeEventListener("generation-plan", handlePlan);
+      window.removeEventListener("generation-chunk", handleChunk);
+      window.removeEventListener("generation-done", handleDone);
+      window.removeEventListener("generation-error", handleError);
+    };
+  }, [isLoading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,16 +99,16 @@ export function PromptInput({ onSubmit, isLoading, placeholder }: PromptInputPro
         <Button
           type="submit"
           disabled={isLoading || !prompt.trim()}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold rounded-xl transition duration-200 flex items-center gap-1.5 active:scale-95 shadow-sm"
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold rounded-xl transition duration-200 flex items-center gap-1.5 active:scale-95 shadow-sm min-w-[140px]"
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Generating...</span>
+              <Loader2 className="w-4 h-4 animate-spin shrink-0" />
+              <span className="truncate max-w-[120px]">{statusMessage}</span>
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4 fill-white/10" />
+              <Sparkles className="w-4 h-4 fill-white/10 shrink-0" />
               <span>Generate UI</span>
             </>
           )}

@@ -68,7 +68,7 @@ export const apiClient = {
    * @returns Resolves to the parsed JSON response
    */
   get: async <T>(path: string, headers?: HeadersInit): Promise<T> => {
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK !== "false";
+    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
     
     if (useMock) {
       // Mock intercepts
@@ -102,7 +102,7 @@ export const apiClient = {
    * @returns Resolves to the parsed JSON response
    */
   post: async <T>(path: string, body?: unknown, headers?: HeadersInit): Promise<T> => {
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK !== "false";
+    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
     if (useMock) {
       // Mock intercepts
@@ -144,7 +144,7 @@ export const apiClient = {
    * @returns Resolves to the parsed JSON response or empty object
    */
   delete: async <T>(path: string, headers?: HeadersInit): Promise<T> => {
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK !== "false";
+    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
 
     if (useMock) {
       if (path.startsWith("/project/")) {
