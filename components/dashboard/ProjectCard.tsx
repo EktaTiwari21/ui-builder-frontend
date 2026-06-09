@@ -6,6 +6,7 @@ import { MoreVertical, FolderOpen, Download, Trash2, Calendar, FileText } from "
 import { Project } from "@/types/project";
 import { Button } from "@/components/ui/button";
 import { useProjectStore } from "@/lib/store/useProjectStore";
+import { exportProject } from "@/lib/utils/exportProject";
 
 interface ProjectCardProps {
   /** The project object containing data to display */
@@ -57,11 +58,21 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
     setMenuOpen(false);
   };
 
-  const handleExport = (e: React.MouseEvent) => {
+  const handleExport = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    // Simulate ZIP export
-    alert(`Packaging ZIP bundle for: ${project.title}`);
     setMenuOpen(false);
+    try {
+      const success = await exportProject.downloadAsZip(
+        project.id,
+        project.generatedCode,
+        project.title
+      );
+      if (!success) {
+        alert("Failed to package and download project ZIP.");
+      }
+    } catch (err) {
+      alert("Failed to package codebase ZIP.");
+    }
   };
 
   return (

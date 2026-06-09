@@ -15,6 +15,8 @@ export interface GenerationStore {
   responseTokens: number;
   /** Accumulates active latency for metrics checking */
   latency: number;
+  /** Streaming progress status message (e.g. Planning, Generating, Complete) */
+  streamStatus: string | null;
 
   /**
    * Starts a new generation task, initializing loading status.
@@ -43,6 +45,30 @@ export interface GenerationStore {
    * Resets the entire generation store state.
    */
   reset: () => void;
+
+  /**
+   * Sets the status message during streaming steps.
+   * @param status The progress description/stage (e.g., "Planning your UI...")
+   */
+  setStatus: (status: string) => void;
+
+  /**
+   * Appends fresh code string segments to the active generation code.
+   * @param chunk The parsed code snippet to merge
+   */
+  appendCode: (chunk: string) => void;
+
+  /**
+   * Finalizes the current generation stream.
+   * @param projectId The completed project ID returned by backend
+   */
+  setComplete: (projectId: string) => void;
+
+  /**
+   * Sets the failure state and logs error string.
+   * @param message Detailed error cause
+   */
+  setError: (message: string) => void;
 }
 
 /**
@@ -55,6 +81,7 @@ export const useGenerationStore = create<GenerationStore>((set) => ({
   promptTokens: 0,
   responseTokens: 0,
   latency: 0,
+  streamStatus: null,
 
   startGeneration: (projectId, prompt) => {
     const newGen: Generation = {
@@ -62,12 +89,13 @@ export const useGenerationStore = create<GenerationStore>((set) => ({
       projectId,
       prompt,
       status: "generating",
-      code: null,
+      code: "",
       error: null,
       createdAt: new Date().toISOString(),
     };
     set({
       activeGeneration: newGen,
+      streamStatus: "Planning your UI...",
     });
   },
 
@@ -86,6 +114,7 @@ export const useGenerationStore = create<GenerationStore>((set) => ({
         promptTokens: state.promptTokens + (metrics?.promptTokens ?? 0),
         responseTokens: state.responseTokens + (metrics?.responseTokens ?? 0),
         latency: state.latency + (metrics?.latency ?? 0),
+        streamStatus: "Complete!",
       };
     }),
 
@@ -95,12 +124,13 @@ export const useGenerationStore = create<GenerationStore>((set) => ({
       const updatedGen: Generation = {
         ...state.activeGeneration,
         status: "error",
-        code: null,
+        code: state.activeGeneration.code || "",
         error: errorMessage,
       };
       return {
         activeGeneration: updatedGen,
         history: [...state.history, updatedGen],
+        streamStatus: "Error",
       };
     }),
 
@@ -111,5 +141,60 @@ export const useGenerationStore = create<GenerationStore>((set) => ({
       promptTokens: 0,
       responseTokens: 0,
       latency: 0,
+      streamStatus: null,
+    }),
+
+  setStatus: (status) =>
+    set((state) => {
+      if (!state.activeGeneration) return {};
+      return {
+        streamStatus: status,
+      };
+    }),
+
+  appendCode: (chunk) =>
+    set((state) => {
+      if (!state.activeGeneration) return {};
+      const updatedGen: Generation = {
+        ...state.activeGeneration,
+        code: (state.activeGeneration.code || "") + chunk,
+      };
+      return {
+        activeGeneration: updatedGen,
+        streamStatus: "Generating...",
+      };
+    }),
+
+  setComplete: (projectId) =>
+    set((state) => {
+      if (!state.activeGeneration) return {};
+      const finalCode = state.activeGeneration.code || "";
+      const updatedGen: Generation = {
+        ...state.activeGeneration,
+        projectId,
+        status: "success",
+        code: finalCode,
+        error: null,
+      };
+      return {
+        activeGeneration: updatedGen,
+        history: [...state.history, updatedGen],
+        streamStatus: "Complete!",
+      };
+    }),
+
+  setError: (message) =>
+    set((state) => {
+      if (!state.activeGeneration) return {};
+      const updatedGen: Generation = {
+        ...state.activeGeneration,
+        status: "error",
+        error: message,
+      };
+      return {
+        activeGeneration: updatedGen,
+        history: [...state.history, updatedGen],
+        streamStatus: "Error",
+      };
     }),
 }));

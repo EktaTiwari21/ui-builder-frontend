@@ -1,6 +1,3 @@
-import { API_ENDPOINTS } from "./endpoints";
-import { mockApi } from "./mock";
-
 /**
  * Custom error class representing API failures.
  * Captures HTTP status codes and error messages from the backend.
@@ -15,152 +12,56 @@ export class APIError extends Error {
   }
 }
 
-const getBaseUrl = (): string => {
-  return process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
-};
+/**
+ * Base fetch wrapper that reads NEXT_PUBLIC_API_URL from environment variables
+ * and processes responses with strict error handling.
+ * 
+ * @param path The endpoint path relative to the base URL
+ * @param options Standard RequestInit options to configure the call
+ * @returns Parsed JSON for successful responses
+ * @throws APIError if response is not ok
+ */
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+  const url = `${baseUrl}${path}`;
 
-const getHeaders = (customHeaders?: HeadersInit): HeadersInit => {
-  const headers: Record<string, string> = {
+  // Default headers merged with user-defined options
+  const defaultHeaders: HeadersInit = {
     "Content-Type": "application/json",
   };
 
-  // Bearer token support for future auth
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+  // Add Authorization Bearer token header if present in localStorage
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("token");
+    if (token) {
+      defaultHeaders["Authorization"] = `Bearer ${token}`;
+    }
   }
 
-  return { ...headers, ...customHeaders };
-};
+  const mergedHeaders = {
+    ...defaultHeaders,
+    ...(options.headers || {}),
+  } as HeadersInit;
 
-/**
- * Helper to handle HTTP response and throw descriptive APIError if failed.
- */
-const handleResponse = async (response: Response): Promise<Response> => {
+  const response = await fetch(url, {
+    ...options,
+    headers: mergedHeaders,
+  });
+
   if (!response.ok) {
-    let message = `Request failed with status ${response.status}`;
+    let errorMessage = `Request failed with status ${response.status}`;
     try {
       const errorData = await response.json();
       if (errorData && errorData.message) {
-        message = errorData.message;
+        errorMessage = errorData.message;
       } else if (errorData && errorData.detail) {
-        message = typeof errorData.detail === "string" ? errorData.detail : JSON.stringify(errorData.detail);
+        errorMessage = typeof errorData.detail === "string" ? errorData.detail : JSON.stringify(errorData.detail);
       }
     } catch {
-      // Fallback if parsing JSON error fails
+      // Ignore parse failure and use fallback message
     }
-    throw new APIError(response.status, message);
+    throw new APIError(response.status, errorMessage);
   }
-  return response;
-};
 
-/**
- * Fetch/HTTP wrapper utility.
- * Intercepts calls when NEXT_PUBLIC_USE_MOCK is true (or when env not configured to false),
- * otherwise routes requests to the real API backend.
- */
-export const apiClient = {
-  /**
-   * Executes a GET request.
-   * If mock mode is active, delegates to mock API handlers.
-   * @param path The endpoint path/route
-   * @param headers Optional custom headers
-   * @returns Resolves to the parsed JSON response
-   */
-  get: async <T>(path: string, headers?: HeadersInit): Promise<T> => {
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
-    
-    if (useMock) {
-      // Mock intercepts
-      if (path === API_ENDPOINTS.PROJECTS) {
-        return (await mockApi.getProjects()) as unknown as T;
-      }
-      if (path.startsWith("/projects/") || path.startsWith("/project/")) {
-        const parts = path.split("/");
-        const id = parts[parts.length - 1] || "";
-        return (await mockApi.getProjectById(id)) as unknown as T;
-      }
-      throw new Error(`GET Endpoint not implemented in mock API: ${path}`);
-    }
-
-    const url = `${getBaseUrl()}${path}`;
-    const response = await fetch(url, {
-      method: "GET",
-      headers: getHeaders(headers),
-    });
-
-    const verifiedResponse = await handleResponse(response);
-    return verifiedResponse.json() as Promise<T>;
-  },
-
-  /**
-   * Executes a POST request.
-   * If mock mode is active, delegates to mock API handlers.
-   * @param path The endpoint path/route
-   * @param body Request body
-   * @param headers Optional custom headers
-   * @returns Resolves to the parsed JSON response
-   */
-  post: async <T>(path: string, body?: unknown, headers?: HeadersInit): Promise<T> => {
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
-
-    if (useMock) {
-      // Mock intercepts
-      if (path === API_ENDPOINTS.GENERATE) {
-        const payload = body as { prompt: string; themeConfig?: { primaryColor?: string; fontFamily?: string } } | undefined;
-        const prompt = payload?.prompt ?? "";
-        const themeConfig = payload?.themeConfig;
-        return (await mockApi.generateUI(prompt, themeConfig)) as unknown as T;
-      }
-      if (path === API_ENDPOINTS.IMPROVE) {
-        const payload = body as { projectId: string; feedback: string } | undefined;
-        const projectId = payload?.projectId ?? "";
-        const feedback = payload?.feedback ?? "";
-        return (await mockApi.improveUI(projectId, feedback)) as unknown as T;
-      }
-      if (path === API_ENDPOINTS.EXPORT) {
-        const payload = body as { projectId: string } | undefined;
-        const projectId = payload?.projectId ?? "";
-        return (await mockApi.exportProject(projectId)) as unknown as T;
-      }
-      throw new Error(`POST Endpoint not implemented in mock API: ${path}`);
-    }
-
-    const url = `${getBaseUrl()}${path}`;
-    const response = await fetch(url, {
-      method: "POST",
-      headers: getHeaders(headers),
-      body: body ? JSON.stringify(body) : undefined,
-    });
-
-    const verifiedResponse = await handleResponse(response);
-    return verifiedResponse.json() as Promise<T>;
-  },
-
-  /**
-   * Executes a DELETE request.
-   * @param path The endpoint path/route
-   * @param headers Optional custom headers
-   * @returns Resolves to the parsed JSON response or empty object
-   */
-  delete: async <T>(path: string, headers?: HeadersInit): Promise<T> => {
-    const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
-
-    if (useMock) {
-      if (path.startsWith("/project/")) {
-        await new Promise((resolve) => setTimeout(resolve, 600));
-        return { success: true } as unknown as T;
-      }
-      throw new Error(`DELETE Endpoint not implemented in mock API: ${path}`);
-    }
-
-    const url = `${getBaseUrl()}${path}`;
-    const response = await fetch(url, {
-      method: "DELETE",
-      headers: getHeaders(headers),
-    });
-
-    const verifiedResponse = await handleResponse(response);
-    return verifiedResponse.json() as Promise<T>;
-  },
-};
+  return response.json() as Promise<T>;
+}

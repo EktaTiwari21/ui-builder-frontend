@@ -1,12 +1,11 @@
 /**
- * API route endpoints constants definition.
- * Matches the backend API contract for Phase 3.
+ * API route endpoints constants definition matching AGENTS.md requirements.
  */
 export const API_ENDPOINTS = {
-  HEALTH: "/health",
-  GENERATE: "/generate-ui",
-  IMPROVE: "/improve-ui",
+  GENERATE_UI: "/generate-ui",
+  IMPROVE_UI: "/improve-ui",
   PROJECTS: "/projects",
-  PROJECT: (id: string) => `/project/${id}`,
-  EXPORT: "/export-project",
+  PROJECT_BY_ID: (id: string) => `/project/${id}`,
+  DELETE_PROJECT: (id: string) => `/project/${id}`,
+  EXPORT_PROJECT: "/export-project",
 } as const;

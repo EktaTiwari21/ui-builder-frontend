@@ -13,10 +13,11 @@ import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { useProjectStore } from "@/lib/store/useProjectStore";
 import { useGenerationStore } from "@/lib/store/useGenerationStore";
+import { apiFetch } from "@/lib/api/client";
 import { mockApi } from "@/lib/api/mock";
-import { apiClient } from "@/lib/api/client";
 import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { ImproveUIResponse, ExportProjectResponse } from "@/types/api";
+import { Project } from "@/types/project";
 import { exportProject } from "@/lib/utils/exportProject";
 
 /**
@@ -32,7 +33,6 @@ export default function ProjectWorkspacePage() {
 
   // Zustand Store integrations
   const activeProject = useProjectStore((state) => state.activeProject);
-  const setActiveProject = useProjectStore((state) => state.setActiveProject);
   const updateProject = useProjectStore((state) => state.updateProject);
 
   const activeGeneration = useGenerationStore((state) => state.activeGeneration);
@@ -41,6 +41,8 @@ export default function ProjectWorkspacePage() {
   const completeGeneration = useGenerationStore((state) => state.completeGeneration);
   const failGeneration = useGenerationStore((state) => state.failGeneration);
   const resetGeneration = useGenerationStore((state) => state.reset);
+
+  const fetchProjectById = useProjectStore((state) => state.fetchProjectById);
 
   // Layout View Tabs
   const [activeTab, setActiveTab] = useState<"preview" | "code">("preview");
@@ -55,8 +57,7 @@ export default function ProjectWorkspacePage() {
       if (!activeProject || activeProject.id !== projectId) {
         setLoading(true);
         try {
-          const project = await mockApi.getProjectById(projectId);
-          setActiveProject(project);
+          const project = await fetchProjectById(projectId);
 
           // Populate initial history generation log if empty to prime the Chat Refinement log
           if (history.length === 0) {
@@ -72,7 +73,7 @@ export default function ProjectWorkspacePage() {
       }
     };
     loadWorkspaceProject();
-  }, [projectId, activeProject, setActiveProject, history.length, startGeneration, completeGeneration, router]);
+  }, [projectId, activeProject, history.length, startGeneration, completeGeneration, router, fetchProjectById]);
 
   // Cleanup active generation on unmount
   useEffect(() => {
@@ -88,21 +89,31 @@ export default function ProjectWorkspacePage() {
     startGeneration(projectId, feedback);
 
     try {
+      const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
       const startMs = Date.now();
-      // 2. Call mock refinement API
-      const response = await apiClient.post<ImproveUIResponse>(API_ENDPOINTS.IMPROVE, {
-        projectId,
-        feedback,
-      });
+      let code = "";
+
+      if (useMock) {
+        // Mock fallback
+        const response = await mockApi.improveUI(projectId, feedback);
+        code = response.code;
+      } else {
+        const response = await apiFetch<ImproveUIResponse>(API_ENDPOINTS.IMPROVE_UI, {
+          method: "POST",
+          body: JSON.stringify({ project_id: projectId, instruction: feedback }),
+        });
+        code = response.code;
+      }
+
       const endMs = Date.now();
 
       // 3. Update Project Store with new source code
       updateProject(projectId, {
-        generatedCode: response.code,
+        generatedCode: code,
       });
 
       // 4. Update Generation store with success status and metrics
-      completeGeneration(response.code, {
+      completeGeneration(code, {
         promptTokens: 120,
         responseTokens: 980,
         latency: endMs - startMs,

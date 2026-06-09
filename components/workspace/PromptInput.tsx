@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Sparkles, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useGenerationStore } from "@/lib/store/useGenerationStore";
 
 interface PromptInputProps {
   /** Callback fired when a prompt is successfully submitted */
@@ -16,49 +17,37 @@ interface PromptInputProps {
 /**
  * PromptInput component for natural language design instructions.
  * Incorporates high-fidelity textareas, character limit validation, and active loading buttons.
- * Displays real-time SSE stream status events ("Planning...", "Generating...", "Done!").
+ * Displays real-time SSE stream status events ("Planning your UI...", "Generating...", "Complete!").
  */
 export function PromptInput({ onSubmit, isLoading, placeholder }: PromptInputProps) {
   const [prompt, setPrompt] = useState("");
-  const [statusMessage, setStatusMessage] = useState("Generating...");
+  const streamStatus = useGenerationStore((state) => state.streamStatus);
+  const [statusMessage, setStatusMessage] = useState("Planning your UI...");
   const maxLength = 500;
 
   useEffect(() => {
     if (!isLoading) {
-      setStatusMessage("Generating...");
+      setStatusMessage("Planning your UI...");
       return;
     }
 
-    const handlePlan = (e: Event) => {
-      const customEvent = e as CustomEvent<string>;
-      setStatusMessage(customEvent.detail || "Planning your UI...");
-    };
-
-    const handleChunk = () => {
-      setStatusMessage("Generating components...");
-    };
-
-    const handleDone = () => {
-      setStatusMessage("Done!");
-    };
-
-    const handleError = (e: Event) => {
-      const customEvent = e as CustomEvent<string>;
-      setStatusMessage(`Error: ${customEvent.detail}`);
-    };
-
-    window.addEventListener("generation-plan", handlePlan);
-    window.addEventListener("generation-chunk", handleChunk);
-    window.addEventListener("generation-done", handleDone);
-    window.addEventListener("generation-error", handleError);
-
-    return () => {
-      window.removeEventListener("generation-plan", handlePlan);
-      window.removeEventListener("generation-chunk", handleChunk);
-      window.removeEventListener("generation-done", handleDone);
-      window.removeEventListener("generation-error", handleError);
-    };
-  }, [isLoading]);
+    if (streamStatus === "Generating...") {
+      setStatusMessage("Generating...");
+    } else if (streamStatus === "Complete!") {
+      setStatusMessage("Complete!");
+    } else if (streamStatus === "Error") {
+      setStatusMessage("Error");
+    } else if (streamStatus) {
+      // If there is any plan description or custom state, show it
+      if (streamStatus.length > 25) {
+        setStatusMessage("Planning your UI...");
+      } else {
+        setStatusMessage(streamStatus);
+      }
+    } else {
+      setStatusMessage("Planning your UI...");
+    }
+  }, [isLoading, streamStatus]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,12 +88,12 @@ export function PromptInput({ onSubmit, isLoading, placeholder }: PromptInputPro
         <Button
           type="submit"
           disabled={isLoading || !prompt.trim()}
-          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold rounded-xl transition duration-200 flex items-center gap-1.5 active:scale-95 shadow-sm min-w-[140px]"
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold rounded-xl transition duration-200 flex items-center gap-1.5 active:scale-95 shadow-sm min-w-[150px]"
         >
           {isLoading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin shrink-0" />
-              <span className="truncate max-w-[120px]">{statusMessage}</span>
+              <span className="truncate max-w-[125px]">{statusMessage}</span>
             </>
           ) : (
             <>

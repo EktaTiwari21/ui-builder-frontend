@@ -4,14 +4,6 @@ import { realApi } from "@/lib/api/real";
 import { mockApi } from "@/lib/api/mock";
 
 /**
- * Helper to fetch the correct API service (real or mock) based on environment.
- */
-const getApiService = () => {
-  const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
-  return useMock ? mockApi : realApi;
-};
-
-/**
  * Interface representing the state and actions of the Zustand project store.
  */
 export interface ProjectStore {
@@ -68,22 +60,23 @@ export interface ProjectStore {
   setError: (error: string | null) => void;
 
   /**
-   * Action to fetch all projects from the active backend API client.
+   * Action to fetch all projects from the active API client (real or mock).
    */
   fetchProjects: () => Promise<void>;
 
   /**
-   * Action to fetch a single project by ID and set it active in the workspace.
+   * Action to fetch a single project by ID and set it active.
    * @param id The project identifier
    */
   fetchProjectById: (id: string) => Promise<Project>;
 }
 
 /**
- * global project state store (useProjectStore) utilizing Zustand.
+ * Global project state store (useProjectStore) utilizing Zustand.
  * Manages project lists, active selections, loading flags, and CRUD actions.
+ * Configures imports from mock.ts or real.ts depending on NEXT_PUBLIC_USE_MOCK env variable.
  */
-export const useProjectStore = create<ProjectStore>((set, get) => ({
+export const useProjectStore = create<ProjectStore>((set) => ({
   projects: [],
   activeProject: null,
   isLoading: false,
@@ -107,6 +100,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     try {
       const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
       if (useMock) {
+        // Mock delay simulation
         await new Promise((resolve) => setTimeout(resolve, 600));
       } else {
         await realApi.deleteProject(id);
@@ -116,6 +110,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
         activeProject: state.activeProject?.id === id ? null : state.activeProject,
       }));
     } catch (err) {
+      console.error("deleteProject error:", err);
       const message = err instanceof Error ? err.message : "Failed to delete project";
       set({ error: message });
       throw err;
@@ -129,10 +124,11 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   fetchProjects: async () => {
     set({ isLoading: true, error: null });
     try {
-      const api = getApiService();
-      const fetched = await api.getProjects();
+      const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
+      const fetched = useMock ? await mockApi.getProjects() : await realApi.getProjects();
       set({ projects: fetched });
     } catch (err) {
+      console.error("fetchProjects error:", err);
       const message = err instanceof Error ? err.message : "Failed to load projects";
       set({ error: message });
     } finally {
@@ -143,11 +139,12 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   fetchProjectById: async (id) => {
     set({ isLoading: true, error: null });
     try {
-      const api = getApiService();
-      const project = await api.getProjectById(id);
+      const useMock = process.env.NEXT_PUBLIC_USE_MOCK === "true";
+      const project = useMock ? await mockApi.getProjectById(id) : await realApi.getProjectById(id);
       set({ activeProject: project });
       return project;
     } catch (err) {
+      console.error("fetchProjectById error:", err);
       const message = err instanceof Error ? err.message : "Failed to load project details";
       set({ error: message });
       throw err;

@@ -10,7 +10,6 @@ import { ProjectGrid } from "@/components/dashboard/ProjectGrid";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { useProjectStore } from "@/lib/store/useProjectStore";
-import { mockApi } from "@/lib/api/mock";
 
 /**
  * DashboardPage component rendering the central project list interface.
@@ -20,28 +19,17 @@ import { mockApi } from "@/lib/api/mock";
 export default function DashboardPage() {
   const router = useRouter();
   const projects = useProjectStore((state) => state.projects);
-  const setProjects = useProjectStore((state) => state.setProjects);
   const isLoading = useProjectStore((state) => state.isLoading);
-  const setLoading = useProjectStore((state) => state.setLoading);
 
-  // Mount effect to fetch mock projects in Phase 1
+  const fetchProjects = useProjectStore((state) => state.fetchProjects);
+
+  // Mount effect to fetch projects
   useEffect(() => {
-    const fetchProjects = async () => {
-      // Only load if current project list is empty to allow local deletions to persist during session
-      if (projects.length === 0) {
-        setLoading(true);
-        try {
-          const fetched = await mockApi.getProjects();
-          setProjects(fetched);
-        } catch (error) {
-          console.error("Error loading mock projects:", error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-    fetchProjects();
-  }, [projects.length, setProjects, setLoading]);
+    // Only load if current project list is empty to allow local deletions to persist during session
+    if (projects.length === 0) {
+      fetchProjects();
+    }
+  }, [projects.length, fetchProjects]);
 
   const handleCreateNew = () => {
     router.push("/workspace");

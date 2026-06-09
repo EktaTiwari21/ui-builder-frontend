@@ -8,9 +8,7 @@ import { Sidebar } from "@/components/common/Sidebar";
 import { PromptInput } from "@/components/workspace/PromptInput";
 import { useGenerationStore } from "@/lib/store/useGenerationStore";
 import { useProjectStore } from "@/lib/store/useProjectStore";
-import { apiClient } from "@/lib/api/client";
-import { API_ENDPOINTS } from "@/lib/api/endpoints";
-import { GenerateUIResponse } from "@/types/api";
+import { useGenerate } from "@/hooks/useGenerate";
 
 /**
  * New Project Workspace page route component.
@@ -21,44 +19,23 @@ export default function NewWorkspacePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  // Zustand Store mappings
-  const startGeneration = useGenerationStore((state) => state.startGeneration);
-  const completeGeneration = useGenerationStore((state) => state.completeGeneration);
-  const failGeneration = useGenerationStore((state) => state.failGeneration);
-
-  const addProject = useProjectStore((state) => state.addProject);
-  const setActiveProject = useProjectStore((state) => state.setActiveProject);
+  const { generate } = useGenerate();
 
   const handleGenerate = async (prompt: string) => {
     setLoading(true);
-    // 1. Initialize active generation logs in the store
-    const mockTempId = `proj-gen-${Date.now().toString().slice(-6)}`;
-    startGeneration(mockTempId, prompt);
-
     try {
-      // 2. Fetch from intercepted Phase-1 mock API
-      const startMs = Date.now();
-      const response = await apiClient.post<GenerateUIResponse>(API_ENDPOINTS.GENERATE, {
-        prompt,
-      });
-      const endMs = Date.now();
-
-      // 3. Update Project Store
-      addProject(response.project);
-      setActiveProject(response.project);
-
-      // 4. Update Generation store with success status and metrics
-      completeGeneration(response.code, {
-        promptTokens: 240,
-        responseTokens: 1420,
-        latency: endMs - startMs,
-      });
-
-      // 5. Automatically route user to dynamic workspace builder
-      router.push(`/workspace/${response.projectId}`);
+      const response = await generate(prompt);
+      if (response && !response.success) {
+        throw new Error(response.error instanceof Error ? response.error.message : "Failed to generate");
+      }
+      // The store and router redirect are handled inside the hook / stream done callback,
+      // but let's verify if we need to route manually. We can redirect to the newly added activeProject ID.
+      const activeProject = useProjectStore.getState().activeProject;
+      if (activeProject) {
+        router.push(`/workspace/${activeProject.id}`);
+      }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to generate interface";
-      failGeneration(errorMsg);
       alert(errorMsg);
     } finally {
       setLoading(false);
