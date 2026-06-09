@@ -1,7 +1,7 @@
-# AGENTS.md — Autonomous UI Builder Agent
+# AGENTS.md — Autonomous UI Builder · Frontend
 
-> This file is automatically loaded by Antigravity 2.0, Claude Code, and compatible AI agents at session start.
-> It gives the agent full project context so every session starts informed — no repeated onboarding.
+> Loaded automatically by Antigravity 2.0 and Claude Code at session start.
+> This is the frontend repo. Backend lives in ui-builder-backend (separate repo).
 
 ---
 
@@ -9,20 +9,20 @@
 
 | Field | Value |
 |---|---|
-| Project name | Autonomous UI Builder Agent |
-| Tagline | "Describe your app idea. Let AI design and generate your frontend instantly." |
+| Project name | Autonomous UI Builder Agent — Frontend |
+| Repo name | ui-builder-frontend |
 | Author | Ekta Tiwari |
 | PRD version | 1.0 — May 24, 2026 |
-| Current phase | Phase 1 — Frontend MVP |
+| Current phase | Phase 3 — Frontend ↔ Backend Integration |
+| Previous phase | Phase 1 complete — all UI components built |
 | Status | Active development |
 
 ---
 
 ## What this product does
 
-An AI-powered platform that transforms natural language prompts into production-ready React/Tailwind frontends.
-
-The user types a description → AI agents plan the UI architecture → generate component code → render a live preview → user refines or exports.
+An AI-powered platform that transforms natural language prompts into
+production-ready React/Tailwind frontends.
 
 **Core loop:** Prompt → Plan → Generate → Preview → Refine → Export
 
@@ -30,327 +30,272 @@ The user types a description → AI agents plan the UI architecture → generate
 
 ## Repository layout
 
-This project is split across two independent repos. Never mix concerns between them.
+Two independent repos — never mix concerns between them.
 
 ```
-ui-builder-frontend/    ← You are working here in Phase 1
-ui-builder-backend/     ← Phase 2 (FastAPI + AI orchestrator)
-```
-
-### Frontend repo — `ui-builder-frontend`
-
-**Framework:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS  
-**UI library:** shadcn/ui · Lucide icons · Framer Motion  
-**State:** Zustand (global) · React Context (UI-scoped)  
-**Testing:** Vitest · React Testing Library · Playwright (E2E)  
-**Deploy:** Vercel
-
-#### Folder structure
-
-```
-ui-builder-frontend/
-├── app/                        # Next.js App Router pages
-│   ├── layout.tsx              # Root layout (fonts, providers)
-│   ├── page.tsx                # Landing / redirect
-│   ├── dashboard/
-│   │   └── page.tsx            # Project list dashboard
-│   ├── workspace/
-│   │   ├── page.tsx            # New project workspace
-│   │   └── [projectId]/
-│   │       └── page.tsx        # Existing project workspace
-│   ├── projects/
-│   │   └── page.tsx            # Project management
-│   └── settings/
-│       └── page.tsx            # User settings
-│
-├── components/
-│   ├── ui/                     # shadcn/ui primitives (auto-generated, do not edit)
-│   ├── workspace/
-│   │   ├── PromptInput.tsx     # Prompt textarea + submit button
-│   │   ├── ChatRefinement.tsx  # Chat thread for iterative refinement
-│   │   └── WorkspaceLayout.tsx # Two-panel split layout
-│   ├── preview/
-│   │   ├── LivePreview.tsx     # Iframe-based live renderer
-│   │   ├── CodeEditor.tsx      # Generated code viewer (read-only + copy)
-│   │   └── PreviewToolbar.tsx  # Responsive toggle, refresh, export
-│   ├── dashboard/
-│   │   ├── ProjectCard.tsx     # Project thumbnail card
-│   │   ├── ProjectGrid.tsx     # Responsive grid of cards
-│   │   └── EmptyState.tsx      # Illustration + CTA for no projects
-│   ├── editor/
-│   │   ├── ComponentTree.tsx   # Generated component hierarchy
-│   │   └── ThemePanel.tsx      # Color/font customization
-│   └── common/
-│       ├── Navbar.tsx
-│       ├── Sidebar.tsx
-│       └── LoadingSpinner.tsx
-│
-├── lib/
-│   ├── api/
-│   │   ├── client.ts           # Axios/fetch wrapper (points to backend)
-│   │   ├── mock.ts             # Mock responses — used in Phase 1 only
-│   │   └── endpoints.ts        # All API endpoint constants
-│   ├── ai/
-│   │   └── stream.ts           # SSE streaming handler (Phase 3)
-│   ├── store/
-│   │   ├── useProjectStore.ts  # Zustand: project CRUD + active project
-│   │   ├── useGenerationStore.ts # Zustand: generation status + results
-│   │   └── useUIStore.ts       # Zustand: sidebar, panels, view modes
-│   └── utils/
-│       ├── codeFormatter.ts    # Prettier wrapper for generated code
-│       └── exportProject.ts    # Zip + download helper
-│
-├── hooks/
-│   ├── useGenerate.ts          # Trigger generation + poll status
-│   ├── useProject.ts           # Load / save / delete project
-│   └── useResponsive.ts        # Breakpoint helpers
-│
-├── types/
-│   ├── project.ts              # Project, Generation, Component types
-│   └── api.ts                  # Request/response shapes
-│
-├── public/
-├── tailwind.config.ts
-├── next.config.ts
-└── tsconfig.json
-```
-
-### Backend repo — `ui-builder-backend`
-
-**Framework:** FastAPI · Python 3.11+  
-**Database:** PostgreSQL via Supabase  
-**Auth:** Supabase Auth (JWT)  
-**AI:** Gemini API (planning) · OpenAI API (code generation)  
-**Testing:** Pytest  
-**Deploy:** Railway or Render
-
-#### Folder structure (Phase 2 — do not create yet)
-
-```
-ui-builder-backend/
-├── app/
-│   ├── main.py
-│   ├── api/
-│   │   ├── generate.py         # POST /generate-ui
-│   │   ├── projects.py         # GET/DELETE /projects, /project/:id
-│   │   ├── export.py           # POST /export-project
-│   │   └── improve.py          # POST /improve-ui
-│   ├── services/
-│   │   ├── orchestrator.py     # AI agent orchestration (LangGraph)
-│   │   ├── planner.py          # UI architecture planning (Gemini)
-│   │   ├── generator.py        # Component code generation (OpenAI)
-│   │   └── validator.py        # Code linting + safety checks
-│   ├── models/
-│   │   ├── user.py
-│   │   ├── project.py
-│   │   └── generation.py
-│   └── db/
-│       └── supabase.py
-└── tests/
+ui-builder-frontend/    ← You are working here (Phase 3)
+ui-builder-backend/     ← FastAPI + AI orchestrator (Phase 2 — complete)
 ```
 
 ---
 
-## Database schema (Supabase / PostgreSQL)
+## What was built in Phase 1 (do not rebuild)
 
-```sql
--- Users
-users (id UUID PK, name TEXT, email TEXT UNIQUE, subscription_plan TEXT, created_at TIMESTAMP)
+All of these already exist. Read before writing — never recreate:
 
--- Projects
-projects (id UUID PK, user_id UUID FK→users, title TEXT, prompt TEXT,
-          generated_code TEXT, preview_url TEXT, created_at TIMESTAMP)
-
--- Generations (audit log per AI call)
-generations (id UUID PK, project_id UUID FK→projects, ai_model TEXT,
-             prompt_tokens INT, response_tokens INT,
-             generation_status TEXT, latency INT)
-
--- Templates
-templates (id UUID PK, category TEXT, template_name TEXT, metadata JSONB)
 ```
+app/
+├── layout.tsx               ✅ Root layout with providers
+├── page.tsx                 ✅ Landing page (hero, features, CTA)
+├── dashboard/page.tsx       ✅ Project grid dashboard
+├── workspace/page.tsx       ✅ New project workspace
+├── workspace/[projectId]/   ✅ Existing project workspace
+├── projects/page.tsx        ✅ Project management
+└── settings/page.tsx        ✅ API keys + preferences
 
-**Indexes:** `user_id`, `created_at`, full-text on `prompt`  
-**Relationships:** one user → many projects · one project → many generations
+components/
+├── ui/                      ✅ shadcn/ui primitives
+├── workspace/PromptInput    ✅ Prompt textarea + submit
+├── workspace/ChatRefinement ✅ Chat thread
+├── workspace/WorkspaceLayout✅ Two-panel split layout
+├── preview/LivePreview      ✅ Iframe renderer
+├── preview/CodeEditor       ✅ Syntax-highlighted code view
+├── preview/PreviewToolbar   ✅ Tab toggle + export button
+├── dashboard/ProjectCard    ✅ Project thumbnail card
+├── dashboard/ProjectGrid    ✅ Responsive card grid
+├── dashboard/EmptyState     ✅ Empty CTA state
+├── common/Navbar            ✅ Top navigation
+├── common/Sidebar           ✅ Left navigation
+└── common/LoadingSpinner    ✅ Loading indicator
+
+lib/
+├── api/mock.ts              ✅ Mock responses (Phase 1) — keep, do not delete
+├── api/endpoints.ts         ✅ Endpoint constants
+├── store/useProjectStore    ✅ Zustand project state
+├── store/useGenerationStore ✅ Zustand generation state
+├── store/useUIStore         ✅ Zustand UI state
+└── utils/exportProject.ts   ✅ Zip download helper
+```
 
 ---
 
-## API contract (backend — Phase 2)
+## Phase 3 rules (replaces all Phase 1 rules)
 
-| Method | Path | Purpose |
-|---|---|---|
-| POST | `/generate-ui` | Generate UI from prompt |
-| POST | `/improve-ui` | Improve existing generated UI |
-| POST | `/export-project` | Export codebase as zip |
-| GET | `/projects` | List user's projects |
-| GET | `/project/:id` | Single project details |
-| DELETE | `/project/:id` | Delete project |
+1. **Real backend calls replace mocks.** `lib/api/mock.ts` stays as fallback
+   but all active calls go through `lib/api/client.ts` → real backend.
+   Toggle via `NEXT_PUBLIC_USE_MOCK=true` in `.env.local` to switch back.
 
-All requests: JSON body  
-All responses: structured JSON  
-Auth: `Authorization: Bearer <jwt>`  
-Rate limiting: free tier = 10 generations/day · premium = 100/day
+2. **Backend URL from env only.** Never hardcode `localhost:8000`.
+   Always read from `process.env.NEXT_PUBLIC_API_URL`.
 
----
+3. **SSE streaming must update UI in real time.** Do not wait for full
+   response — render each chunk as it arrives in the live preview.
 
-## AI agent pipeline
+4. **Light theme only.** Still no dark mode. No `dark:` Tailwind variants.
 
-```
-User Prompt
-  → Prompt Parser        (normalize, sanitize, extract intent + style)
-  → UI Planner Agent     (Gemini — layout architecture, component list)
-  → Component Generator  (OpenAI — React/Tailwind code, structured JSON)
-  → Validator            (lint, safety, accessibility check)
-  → Accessibility Agent  (ARIA, contrast, keyboard nav)
-  → Final Output         (streamed to frontend via SSE)
-```
+5. **No auth UI yet.** Authentication is deferred to a future phase.
+   Assume a logged-in user for all flows.
 
-**Gemini API** — large-context reasoning, UI planning, architecture suggestions  
-**OpenAI API** — frontend code generation, structured JSON output, conversational refinement  
-**LangChain / LangGraph** — multi-agent orchestration, retry + fallback routing
+6. **Preserve all Phase 1 components.** Do not refactor, rename, or
+   restructure existing components during integration sessions.
+
+7. **One file changed per session where possible.** Integration bugs are
+   easiest to isolate when changes are small and focused.
 
 ---
 
-## Tech stack quick-reference
+## Environment variables
+
+### `.env.local` (local development)
+```env
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_USE_MOCK=false
+```
+
+### Vercel (production — set after Railway deploy)
+```env
+NEXT_PUBLIC_API_URL=https://your-backend.up.railway.app
+NEXT_PUBLIC_USE_MOCK=false
+```
+
+---
+
+## Backend API contract (what the frontend calls)
+
+The backend is running at `NEXT_PUBLIC_API_URL`. All endpoints:
+
+| Method | Path | Purpose | Auth required |
+|---|---|---|---|
+| GET | `/health` | Health check | No |
+| POST | `/generate-ui` | Generate UI — returns SSE stream | Yes |
+| POST | `/improve-ui` | Improve existing UI — SSE stream | Yes |
+| GET | `/projects` | List user projects | Yes |
+| GET | `/project/:id` | Single project | Yes |
+| DELETE | `/project/:id` | Delete project | Yes |
+| POST | `/export-project` | Export as zip | Yes |
+
+### SSE event types from `/generate-ui`
+```typescript
+{ type: "plan",  content: "Planning your UI architecture..." }
+{ type: "chunk", content: "export function HeroSection() {..." }
+{ type: "done",  project_id: "uuid", total_tokens: 1240 }
+{ type: "error", message: "Generation failed" }
+```
+
+### Request shapes
+```typescript
+// POST /generate-ui
+{ prompt: string, style: "minimal"|"modern"|"corporate"|"playful", framework: "react-tailwind" }
+
+// POST /improve-ui
+{ project_id: string, instruction: string }
+
+// POST /export-project
+{ project_id: string }
+```
+
+---
+
+## Files to create in Phase 3 (do not create until the session calls for it)
+
+```
+lib/api/client.ts        ← Session A: base fetch wrapper with env URL
+lib/api/real.ts          ← Session B: real API call functions
+lib/ai/stream.ts         ← Session C: SSE streaming handler
+```
+
+---
+
+## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Frontend framework | Next.js 15 · App Router · React 19 · TypeScript |
+| Framework | Next.js 15 · App Router · React 19 · TypeScript |
 | Styling | Tailwind CSS · shadcn/ui · Framer Motion |
-| State management | Zustand · React Context |
-| Backend | FastAPI (Python 3.11+) |
-| Database | PostgreSQL via Supabase |
-| Auth | Supabase Auth · JWT |
-| AI — planning | Gemini API |
-| AI — code gen | OpenAI API |
-| Agent orchestration | LangChain · LangGraph |
-| CI/CD | GitHub Actions |
-| Frontend deploy | Vercel |
-| Backend deploy | Railway or Render |
-| Monitoring | Sentry · PostHog |
-| E2E testing | Playwright |
+| State | Zustand · React Context |
+| API client | Native fetch (no axios) |
+| SSE | fetch + ReadableStream (no EventSource — POST not supported) |
+| Testing | Vitest · React Testing Library · Playwright |
+| Deploy | Vercel |
 
 ---
 
-## Current phase rules (Phase 1 — Frontend)
+## Integration session order (follow strictly)
 
-The agent must follow these constraints until Phase 3 begins:
-
-1. **No real backend calls.** All API interactions must go through `lib/api/mock.ts`. The mock must return realistic-looking generated component code.
-2. **Light theme only.** Do not implement dark mode. No `dark:` Tailwind variants. No theme toggle. This will be added in a future phase.
-3. **No authentication UI yet.** Assume a logged-in user. No sign-in / sign-up pages in Phase 1.
-4. **React/Tailwind output only.** Generated code examples in the mock should always be React + Tailwind. No Vue, no plain HTML output yet.
-5. **Responsive by default.** Every component must work at mobile (375px), tablet (768px), and desktop (1280px). Use Tailwind responsive prefixes (`sm:`, `md:`, `lg:`).
-6. **shadcn/ui for all form elements and primitives.** Do not hand-roll buttons, inputs, dialogs, or dropdowns — import from `@/components/ui/`.
+| Session | File(s) changed | What it does |
+|---|---|---|
+| A | `lib/api/client.ts`, `lib/api/endpoints.ts` | Base fetch wrapper + env URL |
+| B | `lib/api/real.ts`, `lib/store/useProjectStore.ts` | Real API calls for projects |
+| C | `lib/ai/stream.ts`, `hooks/useGenerate.ts`, `components/workspace/PromptInput.tsx`, `components/preview/LivePreview.tsx` | SSE streaming end-to-end |
+| D | All integration files | E2E manual test + bug fixes |
 
 ---
 
-## Code style and conventions
+## SSE streaming implementation pattern
 
-- **TypeScript strict mode** — no `any`, no implicit returns
-- **Named exports** for all components (no default exports except page files)
-- **File naming:** PascalCase for components, camelCase for hooks/utils
-- **Imports:** absolute paths via `@/` alias (configured in `tsconfig.json`)
-- **CSS:** Tailwind utility classes only — no custom CSS files except `globals.css`
-- **Comments:** JSDoc on all exported functions and component props
-- **Component pattern:**
-  ```tsx
-  // Always define Props interface above component
-  interface PromptInputProps {
-    onSubmit: (prompt: string) => void;
-    isLoading: boolean;
-  }
+Because `/generate-ui` is a POST endpoint, use `fetch` with `ReadableStream`
+— NOT `EventSource` (EventSource only supports GET):
 
-  export function PromptInput({ onSubmit, isLoading }: PromptInputProps) { ... }
-  ```
-- **Zustand store pattern:**
-  ```ts
-  // lib/store/useProjectStore.ts
-  interface ProjectStore {
-    projects: Project[];
-    activeProject: Project | null;
-    setActiveProject: (p: Project) => void;
-  }
-  export const useProjectStore = create<ProjectStore>()(...)
-  ```
+```typescript
+// lib/ai/stream.ts — correct pattern
+const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/generate-ui`, {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ prompt, style, framework }),
+});
+
+const reader = response.body?.getReader();
+const decoder = new TextDecoder();
+
+while (true) {
+  const { done, value } = await reader.read();
+  if (done) break;
+  const text = decoder.decode(value);
+  // parse SSE lines: text.split("\n").filter(l => l.startsWith("data:"))
+}
+```
 
 ---
 
-## Performance targets (non-negotiable)
+## Code conventions (unchanged from Phase 1)
+
+- TypeScript strict mode — no `any`, no implicit returns
+- Named exports for all components (no default exports except page files)
+- File naming: PascalCase for components, camelCase for hooks/utils
+- Imports: absolute paths via `@/` alias
+- CSS: Tailwind utility classes only — no custom CSS except `globals.css`
+- JSDoc on all exported functions
+
+---
+
+## Performance targets (unchanged)
 
 | Metric | Target |
 |---|---|
 | Initial page load | < 3 seconds |
-| AI generation response | < 20 seconds |
-| Live preview update | < 1 second |
-| Export generation | < 10 seconds |
-| Lighthouse accessibility score | > 85 |
-| Responsive layout accuracy | > 90% |
+| First SSE chunk visible | < 3 seconds after submit |
+| Full UI generation | < 20 seconds |
+| Live preview update lag | < 1 second per chunk |
+| Export download | < 10 seconds |
 
 ---
 
 ## Security rules
 
-- Never log prompt content or generated code to the console in production
-- All user input must be sanitized before being sent to any API
-- API keys must only live in `.env.local` — never hardcoded
-- Use `next/headers` and server components for any sensitive reads
-- Rate limit all generation endpoints on the backend
+- Never log prompt content or generated code to console in production
+- API keys only in `.env.local` — never hardcoded
+- `NEXT_PUBLIC_` prefix only for values safe to expose to the browser
+- Backend URL is public — fine to expose via `NEXT_PUBLIC_API_URL`
+- Never expose `SUPABASE_SERVICE_KEY` or AI API keys to the frontend
 
 ---
 
-## What is explicitly out of scope for MVP
+## Error handling pattern for API calls
 
-Do not build or suggest these — they are deferred to Phase 3+:
-
-- Full backend generation (only frontend code is generated)
-- Native mobile app generation
-- Real-time collaboration / multiplayer editing
-- Offline AI inference
-- Advanced animation engine
-- Full Figma-to-code conversion
-- Enterprise team management
-- Dark mode (Phase 2)
-- Authentication UI (Phase 2)
-- GitHub export (Phase 2)
-- Voice prompt support (Phase 2)
+```typescript
+// Always wrap real API calls like this
+try {
+  const data = await getProjects();
+  setProjects(data);
+} catch (error) {
+  if (error instanceof APIError && error.status === 401) {
+    // handle auth error
+  } else {
+    toast({ title: "Failed to load projects", variant: "destructive" });
+  }
+}
+```
 
 ---
 
-## Useful prompts to continue work
-
-When you need the agent to continue from a specific point, use these as session starters:
+## Commit message format
 
 ```
-# Scaffold a new component
-"Create [ComponentName] in components/[folder]/ following the project's TypeScript
-and Tailwind conventions. Props should include [list props]."
-
-# Add a new page
-"Add a new page at app/[route]/page.tsx. Use the existing Navbar and Sidebar
-layout. The page should [describe purpose]."
-
-# Wire mock data
-"Update lib/api/mock.ts to return a realistic mock response for [endpoint].
-The response shape should match the types in types/project.ts."
-
-# Fix a bug
-"Here is the error: [paste error]. The relevant file is [filename].
-Find the root cause and fix it without touching other components."
-
-# Write tests
-"Write Vitest unit tests for [ComponentName]. Cover: [list cases].
-Use React Testing Library. Mock any Zustand stores."
+feat: wire real GET /projects replacing mock
+feat: add SSE streaming to PromptInput
+fix: handle SSE parse error for malformed chunks
+chore: update AGENTS.md to Phase 3
 ```
 
 ---
 
 ## Agent behaviour guidelines
 
-- **Always read existing code before writing new code.** Never assume a file doesn't exist.
-- **Prefer editing over creating.** If a component partially exists, extend it.
-- **One task per session.** Do not refactor unrelated files while implementing a feature.
-- **Commit message format:** `feat: add PromptInput component` / `fix: correct Zustand store type` / `chore: update mock API responses`
-- **When unsure about scope,** check this file first. If still unclear, ask before writing code.
-- **Do not change `tailwind.config.ts`** without an explicit instruction to do so.
-- **Do not install new npm packages** without checking if a shadcn/ui primitive or existing dependency already covers the need.
+- **Always read existing files before editing.** Phase 1 components exist — extend, don't rebuild.
+- **One session = one concern.** Session A touches API client only. Session C touches streaming only.
+- **Never delete mock.ts.** Keep it as fallback — swap via env flag.
+- **Do not refactor Phase 1 components** during integration. Fix integration bugs only.
+- **When backend returns an error**, surface it via shadcn toast — never silently swallow.
+- **Do not install new npm packages** without checking if fetch/built-ins already cover the need.
+
+---
+
+## Out of scope for Phase 3
+
+- Authentication / login UI (Phase 4)
+- Dark mode (Phase 4)
+- GitHub export
+- Voice prompts
+- Figma integration
+- Real-time collaboration
+- Full-stack code generation
