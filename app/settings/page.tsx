@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { User, Key, Settings2, Eye, EyeOff, Save, CheckCircle, Sparkles } from "lucide-react";
 import { Navbar } from "@/components/common/Navbar";
 import { Sidebar } from "@/components/common/Sidebar";
+import { AuthGuard } from "@/components/common/AuthGuard";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -76,7 +77,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <AuthGuard>
+      <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Dynamic Header */}
       <Navbar />
 
@@ -298,5 +300,6 @@ export default function SettingsPage() {
         </div>
       )}
     </div>
+    </AuthGuard>
   );
 }

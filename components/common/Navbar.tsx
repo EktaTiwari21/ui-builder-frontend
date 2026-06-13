@@ -2,7 +2,8 @@
 
 import React from "react";
 import Link from "next/link";
-import { Menu, Settings, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Menu, Settings, Sparkles, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useUIStore } from "@/lib/store/useUIStore";
 import { useProjectStore } from "@/lib/store/useProjectStore";
@@ -12,8 +13,18 @@ import { useProjectStore } from "@/lib/store/useProjectStore";
  * Displays logo on the left, mobile hamburger button, active project name in the center, and settings on the right.
  */
 export function Navbar() {
+  const router = useRouter();
   const toggleSidebar = useUIStore((state) => state.toggleSidebar);
   const activeProject = useProjectStore((state) => state.activeProject);
+
+  const handleLogout = () => {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("token");
+      // Trigger a storage event to clear state
+      window.dispatchEvent(new Event("storage"));
+      window.location.href = "/login";
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full h-16 border-b border-slate-200/80 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 flex items-center justify-between px-4 sm:px-6 shadow-sm shadow-slate-100/40">
@@ -55,8 +66,8 @@ export function Navbar() {
         )}
       </div>
 
-      {/* Right Area: Settings Shortcut */}
-      <div className="flex items-center gap-2">
+      {/* Right Area: Settings & Log Out */}
+      <div className="flex items-center gap-1.5">
         <Button
           variant="ghost"
           size="icon"
@@ -67,6 +78,16 @@ export function Navbar() {
           <Link href="/settings">
             <Settings className="w-5 h-5" />
           </Link>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleLogout}
+          className="text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+          aria-label="Log Out"
+        >
+          <LogOut className="w-5 h-5" />
         </Button>
       </div>
     </header>

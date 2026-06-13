@@ -19,6 +19,7 @@ import { API_ENDPOINTS } from "@/lib/api/endpoints";
 import { ImproveUIResponse, ExportProjectResponse } from "@/types/api";
 import { Project } from "@/types/project";
 import { exportProject } from "@/lib/utils/exportProject";
+import { AuthGuard } from "@/components/common/AuthGuard";
 
 /**
  * Dynamic project workspace builder page.
@@ -157,41 +158,46 @@ export default function ProjectWorkspacePage() {
   // Renders a complete full-page loading skeleton
   if (loading && !activeProject) {
     return (
-      <div className="flex flex-col min-h-screen bg-slate-50">
-        <Navbar />
-        <div className="flex flex-1">
-          <Sidebar />
-          <div className="flex-1 flex flex-col items-center justify-center gap-3">
-            <LoadingSpinner size="lg" />
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">
-              Loading Builder Workspace...
-            </span>
+      <AuthGuard>
+        <div className="flex flex-col min-h-screen bg-slate-50">
+          <Navbar />
+          <div className="flex flex-1">
+            <Sidebar />
+            <div className="flex-1 flex flex-col items-center justify-center gap-3">
+              <LoadingSpinner size="lg" />
+              <span className="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">
+                Loading Builder Workspace...
+              </span>
+            </div>
           </div>
         </div>
-      </div>
+      </AuthGuard>
     );
   }
 
   // Fallback view when no project matches
   if (!activeProject) {
     return (
-      <div className="flex flex-col min-h-screen bg-slate-50">
-        <Navbar />
-        <div className="flex flex-1">
-          <Sidebar />
-          <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
-            <h3 className="font-extrabold text-slate-800 text-lg">Project Not Found</h3>
-            <p className="text-slate-500 text-sm mt-1">Please select an existing project from your dashboard.</p>
+      <AuthGuard>
+        <div className="flex flex-col min-h-screen bg-slate-50">
+          <Navbar />
+          <div className="flex flex-1">
+            <Sidebar />
+            <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+              <h3 className="font-extrabold text-slate-800 text-lg">Project Not Found</h3>
+              <p className="text-slate-500 text-sm mt-1">Please select an existing project from your dashboard.</p>
+            </div>
           </div>
         </div>
-      </div>
+      </AuthGuard>
     );
   }
 
   const isGenerating = activeGeneration?.status === "generating";
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <AuthGuard>
+      <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Global Navigation Header */}
       <Navbar />
 
@@ -235,5 +241,6 @@ export default function ProjectWorkspacePage() {
         </ErrorBoundary>
       </div>
     </div>
+    </AuthGuard>
   );
 }

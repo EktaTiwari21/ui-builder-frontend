@@ -9,6 +9,7 @@ import { PromptInput } from "@/components/workspace/PromptInput";
 import { useGenerationStore } from "@/lib/store/useGenerationStore";
 import { useProjectStore } from "@/lib/store/useProjectStore";
 import { useGenerate } from "@/hooks/useGenerate";
+import { AuthGuard } from "@/components/common/AuthGuard";
 
 /**
  * New Project Workspace page route component.
@@ -43,7 +44,8 @@ export default function NewWorkspacePage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <AuthGuard>
+      <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Navigation Header */}
       <Navbar />
 
@@ -96,5 +98,6 @@ export default function NewWorkspacePage() {
         </main>
       </div>
     </div>
+    </AuthGuard>
   );
 }

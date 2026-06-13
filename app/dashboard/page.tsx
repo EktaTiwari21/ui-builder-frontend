@@ -10,6 +10,7 @@ import { ProjectGrid } from "@/components/dashboard/ProjectGrid";
 import { EmptyState } from "@/components/dashboard/EmptyState";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { useProjectStore } from "@/lib/store/useProjectStore";
+import { AuthGuard } from "@/components/common/AuthGuard";
 
 /**
  * DashboardPage component rendering the central project list interface.
@@ -36,7 +37,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-slate-50">
+    <AuthGuard>
+      <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Global Navigation Header */}
       <Navbar />
 
@@ -95,5 +97,6 @@ export default function DashboardPage() {
         </main>
       </div>
     </div>
+    </AuthGuard>
   );
 }
