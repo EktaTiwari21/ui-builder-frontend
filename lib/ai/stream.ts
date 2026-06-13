@@ -23,10 +23,14 @@ export async function streamGenerate(
 
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
+    console.log("[stream] Token exists in localStorage:", !!token);
+    console.log("[stream] Token length:", token?.length);
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
   }
+
+  console.log("[stream] Authorization attached:", !headers ? false : !!(headers as any)["Authorization"]);
 
   const response = await fetch(url, {
     method: "POST",

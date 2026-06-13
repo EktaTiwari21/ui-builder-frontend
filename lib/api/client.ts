@@ -30,9 +30,10 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     "Content-Type": "application/json",
   };
 
-  // Add Authorization Bearer token header if present in localStorage
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
+    console.log("[client] Token exists in localStorage:", !!token);
+    console.log("[client] Token length:", token?.length);
     if (token) {
       defaultHeaders["Authorization"] = `Bearer ${token}`;
     }
@@ -42,6 +43,8 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
     ...defaultHeaders,
     ...(options.headers || {}),
   } as HeadersInit;
+
+  console.log("[client] Authorization attached:", !mergedHeaders ? false : !!(mergedHeaders as any)["Authorization"]);
 
   const response = await fetch(url, {
     ...options,
