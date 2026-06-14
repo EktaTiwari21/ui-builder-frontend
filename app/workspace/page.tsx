@@ -31,7 +31,9 @@ export default function NewWorkspacePage() {
       }
       // Navigate to the newly created project workspace
       const activeGen = useGenerationStore.getState().activeGeneration;
+      console.log("[ACTIVE GENERATION]", activeGen);
       if (activeGen && activeGen.projectId && !activeGen.projectId.startsWith("proj-gen-")) {
+        console.log("[ROUTER PUSH]", `/workspace/${activeGen.projectId}`);
         router.push(`/workspace/${activeGen.projectId}`);
       }
     } catch (err) {

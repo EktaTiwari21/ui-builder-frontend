@@ -143,6 +143,7 @@ export async function streamGenerate(
               console.log(`[stream] Chunk received. Total chunks: ${chunkCount}, Accumulated code length: ${accumulatedLength}`);
               store.appendCode(parsed.content);
             } else if (parsed.type === "done") {
+              console.log("[DONE EVENT]", parsed);
               console.log(`[stream] Done event received. project_id: ${parsed.project_id}`);
               store.setComplete(parsed.project_id);
             } else if (parsed.type === "error") {
