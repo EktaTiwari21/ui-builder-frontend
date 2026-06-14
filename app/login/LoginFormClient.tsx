@@ -65,9 +65,12 @@ export default function LoginFormClient() {
         throw new Error(data.error || "Authentication failed.");
       }
 
-      // Store JWT token to localStorage
+      // Store JWT tokens to localStorage
       if (data.token) {
         localStorage.setItem("token", data.token);
+        if (data.refresh_token) {
+          localStorage.setItem("refresh_token", data.refresh_token);
+        }
         // Dispatch custom storage event to notify navbar/other client components
         window.dispatchEvent(new Event("storage"));
       }

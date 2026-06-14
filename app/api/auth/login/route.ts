@@ -39,6 +39,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       token: loginData.access_token,
+      refresh_token: loginData.refresh_token,
       user: loginData.user,
     });
   } catch (error) {
