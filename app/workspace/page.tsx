@@ -29,11 +29,10 @@ export default function NewWorkspacePage() {
       if (response && !response.success) {
         throw new Error(response.error instanceof Error ? response.error.message : "Failed to generate");
       }
-      // The store and router redirect are handled inside the hook / stream done callback,
-      // but let's verify if we need to route manually. We can redirect to the newly added activeProject ID.
-      const activeProject = useProjectStore.getState().activeProject;
-      if (activeProject) {
-        router.push(`/workspace/${activeProject.id}`);
+      // Navigate to the newly created project workspace
+      const activeGen = useGenerationStore.getState().activeGeneration;
+      if (activeGen && activeGen.projectId && !activeGen.projectId.startsWith("proj-gen-")) {
+        router.push(`/workspace/${activeGen.projectId}`);
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to generate interface";

@@ -111,6 +111,9 @@ export async function streamGenerate(
 
   const decoder = new TextDecoder();
   let buffer = "";
+  
+  let chunkCount = 0;
+  let accumulatedLength = 0;
 
   try {
     while (true) {
@@ -135,8 +138,12 @@ export async function streamGenerate(
             if (parsed.type === "plan") {
               store.setStatus(parsed.content);
             } else if (parsed.type === "chunk") {
+              chunkCount++;
+              accumulatedLength += (parsed.content || "").length;
+              console.log(`[stream] Chunk received. Total chunks: ${chunkCount}, Accumulated code length: ${accumulatedLength}`);
               store.appendCode(parsed.content);
             } else if (parsed.type === "done") {
+              console.log(`[stream] Done event received. project_id: ${parsed.project_id}`);
               store.setComplete(parsed.project_id);
             } else if (parsed.type === "error") {
               store.setError(parsed.message);
