@@ -1,0 +1,6 @@
+{
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://its2et-ui-builder-backend.hf.space",
+    "NEXT_PUBLIC_USE_MOCK": "false"
+  }
+}
