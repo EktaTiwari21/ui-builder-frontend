@@ -29,12 +29,30 @@ export default function NewWorkspacePage() {
       if (response && !response.success) {
         throw new Error(response.error instanceof Error ? response.error.message : "Failed to generate");
       }
-      // Navigate to the newly created project workspace
-      const activeGen = useGenerationStore.getState().activeGeneration;
+
+      // Wait for the store's projectId to be updated with a real UUID from the backend.
+      // setComplete() in the Zustand store is called during the stream, but we need
+      // to read the final value synchronously after the stream finishes.
+      let activeGen = useGenerationStore.getState().activeGeneration;
       console.log("[ACTIVE GENERATION]", activeGen);
+
+      // If the projectId isn't a real UUID yet, poll for up to 3s
+      let attempts = 0;
+      while (
+        (!activeGen?.projectId || activeGen.projectId.startsWith("proj-gen-")) &&
+        attempts < 30
+      ) {
+        await new Promise((r) => setTimeout(r, 100));
+        activeGen = useGenerationStore.getState().activeGeneration;
+        attempts++;
+      }
+
       if (activeGen && activeGen.projectId && !activeGen.projectId.startsWith("proj-gen-")) {
         console.log("[ROUTER PUSH]", `/workspace/${activeGen.projectId}`);
         router.push(`/workspace/${activeGen.projectId}`);
+      } else {
+        console.warn("[workspace] Generation completed but no project_id received from backend.");
+        throw new Error("Generation completed but no project was saved. Please try again.");
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Failed to generate interface";

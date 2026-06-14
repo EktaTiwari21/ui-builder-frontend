@@ -114,6 +114,8 @@ export async function streamGenerate(
   
   let chunkCount = 0;
   let accumulatedLength = 0;
+  let generationError: string | null = null;
+
 
   try {
     while (true) {
@@ -147,11 +149,18 @@ export async function streamGenerate(
               console.log(`[stream] Done event received. project_id: ${parsed.project_id}`);
               store.setComplete(parsed.project_id);
             } else if (parsed.type === "error") {
-              store.setError(parsed.message);
-              throw new Error(parsed.message || "Generation error event received");
+              const errMsg = parsed.message || "Generation error event received";
+              store.setError(errMsg);
+              // Use a flag to propagate error outside the JSON-parse try/catch
+              generationError = errMsg;
             }
-          } catch (e) {
-            console.error("Error parsing SSE JSON payload:", e);
+          } catch (jsonParseErr) {
+            // Only log JSON parse errors, don't swallow actual generation errors
+            console.error("Error parsing SSE JSON payload:", jsonParseErr);
+          }
+          // Propagate generation error after the JSON try/catch
+          if (generationError) {
+            throw new Error(generationError);
           }
         }
       }
