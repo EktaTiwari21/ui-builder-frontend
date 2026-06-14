@@ -4,6 +4,23 @@ import { Project } from "@/types/project";
 import { ExportProjectResponse } from "@/types/api";
 
 /**
+ * Transforms a raw backend API project response (snake_case) into the
+ * frontend Project interface (camelCase).
+ */
+function transformProject(raw: Record<string, unknown>): Project {
+  return {
+    id: raw.id as string,
+    userId: (raw.user_id ?? raw.userId) as string,
+    title: (raw.title ?? "Untitled Project") as string,
+    prompt: (raw.prompt ?? "") as string,
+    // Backend stores as generated_code (snake_case)
+    generatedCode: ((raw.generated_code ?? raw.generatedCode) as string) || "",
+    previewUrl: (raw.preview_url ?? raw.previewUrl) as string | undefined,
+    createdAt: (raw.created_at ?? raw.createdAt) as string,
+  };
+}
+
+/**
  * Real API endpoint calls wrapping apiFetch helper for production backend.
  */
 export const realApi = {
@@ -11,18 +28,20 @@ export const realApi = {
    * Retrieves all user projects.
    */
   getProjects: async (): Promise<Project[]> => {
-    return apiFetch<Project[]>(API_ENDPOINTS.PROJECTS, {
+    const raw = await apiFetch<Record<string, unknown>[]>(API_ENDPOINTS.PROJECTS, {
       method: "GET",
     });
+    return raw.map(transformProject);
   },
 
   /**
    * Retrieves a single project details by ID.
    */
   getProjectById: async (id: string): Promise<Project> => {
-    return apiFetch<Project>(API_ENDPOINTS.PROJECT_BY_ID(id), {
+    const raw = await apiFetch<Record<string, unknown>>(API_ENDPOINTS.PROJECT_BY_ID(id), {
       method: "GET",
     });
+    return transformProject(raw);
   },
 
   /**
