@@ -131,8 +131,13 @@ export async function streamGenerate(
       for (const line of lines) {
         const trimmed = line.trim();
         if (!trimmed) continue;
+        // Skip SSE comment/keep-alive lines (e.g. ": keepalive", ": ping")
+        if (trimmed.startsWith(":")) continue;
+        // Skip SSE event-type lines (e.g. "event: message")
+        if (trimmed.startsWith("event:")) continue;
 
         if (trimmed.startsWith("data:")) {
+
           const rawJson = trimmed.slice(5).trim();
           try {
             const parsed = JSON.parse(rawJson);
