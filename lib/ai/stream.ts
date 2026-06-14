@@ -2,11 +2,28 @@ import { useGenerationStore } from "@/lib/store/useGenerationStore";
 import { refreshAccessToken } from "@/lib/api/client";
 
 /**
+ * Extracts the error code from a FastAPI HTTPException body.
+ *
+ * FastAPI serialises HTTPException details as:
+ *   { "detail": { "code": "TOKEN_EXPIRED", "message": "..." } }
+ *   OR (for plain string details):
+ *   { "detail": "Not authenticated." }
+ */
+function getErrorCode(body: Record<string, unknown>): string | undefined {
+  const detail = body.detail;
+  if (detail && typeof detail === "object") {
+    return (detail as Record<string, unknown>).code as string | undefined;
+  }
+  return body.code as string | undefined;
+}
+
+/**
  * Connects to the POST /generate-ui streaming API and processes Server-Sent Events (SSE).
  * Streams structural logs and layout JSX code snippets to the UI generation store in real-time.
  *
- * Handles TOKEN_EXPIRED responses by calling refreshAccessToken() and retrying once.
- * If the refresh fails, the error is propagated so the caller can redirect to /login.
+ * Handles TOKEN_EXPIRED (code inside FastAPI detail object) by calling refreshAccessToken()
+ * and retrying once. If the refresh fails, error is propagated and /login redirect is handled
+ * inside refreshAccessToken.
  *
  * @param prompt    The natural language layout design description
  * @param style     Selected design aesthetic theme config
@@ -29,13 +46,13 @@ export async function streamGenerate(
 
   if (typeof window !== "undefined") {
     const token = localStorage.getItem("token");
-    console.log("[stream] Token exists in localStorage:", !!token);
+    console.log("[stream] Token in localStorage:", !!token);
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
   }
 
-  console.log("[stream] Authorization attached:", !!headers["Authorization"]);
+  console.log("[stream] Authorization header attached:", !!headers["Authorization"]);
 
   const response = await fetch(url, {
     method: "POST",
@@ -52,12 +69,16 @@ export async function streamGenerate(
       // ignore parse failure — treat as generic 401
     }
 
-    if (body.code === "TOKEN_EXPIRED") {
-      console.log("[stream] Received TOKEN_EXPIRED — attempting refresh");
+    console.log("[stream] 401 body received:", JSON.stringify(body));
+    const code = getErrorCode(body);
+    console.log("[stream] Parsed error code:", code);
+
+    if (code === "TOKEN_EXPIRED") {
+      console.log("[stream] TOKEN_EXPIRED received — attempting refresh");
       const newToken = await refreshAccessToken();
 
       if (newToken) {
-        console.log("[stream] Retrying stream request with new token");
+        console.log("[stream] Retrying original request with new token");
         return streamGenerate(prompt, style, framework, true /* _isRetry */);
       }
 
@@ -65,13 +86,17 @@ export async function streamGenerate(
       throw new Error("Session expired. Please log in again.");
     }
 
+    // Generic 401 — extract readable message
+    const detail = body.detail;
     const errorText =
+      (typeof detail === "object" && detail !== null
+        ? (detail as any).message
+        : typeof detail === "string"
+        ? detail
+        : null) ||
       (body as any).message ||
-      (body as any).detail ||
       `Server returned status ${response.status}`;
-    throw new Error(
-      typeof errorText === "string" ? errorText : JSON.stringify(errorText)
-    );
+    throw new Error(typeof errorText === "string" ? errorText : JSON.stringify(errorText));
   }
 
   if (!response.ok) {
