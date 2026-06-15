@@ -109,7 +109,7 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
   <!-- lucide-react icons (makes all icons available as LucideReact.*) -->
-  <script src="https://unpkg.com/lucide-react@1.18.0/dist/umd/lucide-react.js" crossorigin></script>
+  <script src="https://unpkg.com/lucide-react@0.468.0/dist/umd/lucide-react.js" crossorigin></script>
   <!-- Babel Standalone compiler -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
