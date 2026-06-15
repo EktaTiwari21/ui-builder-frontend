@@ -25,25 +25,59 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
   const iframeSrcDoc = useMemo(() => {
     if (!code) return "";
 
-    // 1. Sanitize import statements so Babel executes ESM modules in a standard browser script tag
+    // 1. Extract lucide-react imports before stripping, so we can re-inject them
+    const lucideImportMatch = code.match(
+      /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]lucide-react['"];?/
+    );
+    const lucideIcons = lucideImportMatch
+      ? lucideImportMatch[1].replace(/\s+/g, " ").trim()
+      : "";
+
+    // 2. Sanitize import statements for Babel inline script execution
     let cleanedCode = code
       .replace(/import\s+React[^{]*from\s+['"]react['"];?/g, "")
       .replace(/import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]react['"];?/g, "const { $1 } = React;")
-      .replace(/import\s+.*from\s+['"][^'"]+['"];?/g, "") // strip other import modules
-      .replace(/export\s+default\s+function/g, "function") // simplify export default
-      .replace(/export\s+function/g, "function"); // simplify named exports
+      .replace(/import\s+.*from\s+['"][^'"]+['"];?/g, "") // strip remaining imports
+      .replace(/export\s+default\s+function/g, "function")
+      .replace(/export\s+default\s+/g, "const __DefaultExport = ")
+      .replace(/export\s+function/g, "function")
+      .replace(/export\s+const/g, "const");
 
-    // 2. Extract first defined React Component name to mount
-    const componentMatch = cleanedCode.match(/function\s+([A-Z][a-zA-Z0-9]*)/);
-    const componentName = componentMatch ? componentMatch[1] : "GeneratedLandingHero";
+    // Prepend lucide icon destructure if icons were used
+    if (lucideIcons) {
+      cleanedCode = `const { ${lucideIcons} } = LucideReact;\n` + cleanedCode;
+    }
 
-    // 3. Assemble complete self-contained HTML page
+    // 3. Find the best root component to mount:
+    //    Priority: explicit default export variable → name containing Page/App/Landing/Home/Section
+    //    Fallback: last defined uppercase function
+    const allFunctions = [...cleanedCode.matchAll(/function\s+([A-Z][a-zA-Z0-9]*)/g)].map(
+      (m) => m[1]
+    );
+    const defaultExportMatch = cleanedCode.match(/const\s+__DefaultExport\s*=/);
+    let componentName = "GeneratedComponent";
+    if (defaultExportMatch) {
+      componentName = "__DefaultExport";
+    } else if (allFunctions.length > 0) {
+      // Prefer a component with a root-like name
+      const rootNames = ["App", "Page", "Landing", "Home", "Main", "Layout", "Root"];
+      const rootComponent = allFunctions.find((name) =>
+        rootNames.some((r) => name.includes(r))
+      );
+      // Otherwise pick the last component (parent wraps children, so last = outermost)
+      componentName = rootComponent || allFunctions[allFunctions.length - 1];
+    }
+
+    // 4. Assemble complete self-contained HTML page
     return `<!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Novastack Sandbox Preview</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Nunito:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <!-- Tailwind CSS Play CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -52,36 +86,41 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
         extend: {
           fontFamily: {
             sans: ['Inter', 'sans-serif'],
+            nunito: ['Nunito', 'sans-serif'],
+            poppins: ['Poppins', 'sans-serif'],
           }
         }
       }
     }
   </script>
-  <!-- React 18 CDN (Babel Standalone works cleanly with v18) -->
+  <!-- React 18 -->
   <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <!-- lucide-react icons (makes all icons available as LucideReact.*) -->
+  <script src="https://unpkg.com/lucide-react@latest/dist/umd/lucide-react.js" crossorigin></script>
   <!-- Babel Standalone compiler -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
-    /* Hide scrollbars but permit scrolling */
     ::-webkit-scrollbar { display: none; }
     body { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
-<body class="min-h-full bg-slate-50 text-slate-900 flex flex-col font-sans">
+<body class="min-h-full bg-white text-slate-900 flex flex-col font-sans">
   <div id="root" class="flex flex-col flex-1"></div>
   <script type="text/babel">
+    // Make lucide icons available in scope
+    const LucideReact = window.LucideReact || {};
     try {
       ${cleanedCode}
 
-      // Mount the generated component into standard div root
       const root = ReactDOM.createRoot(document.getElementById('root'));
       root.render(React.createElement(${componentName}));
     } catch (err) {
+      console.error('LivePreview error:', err);
       document.getElementById('root').innerHTML = \`
-        <div class="p-6 m-4 border-2 border-dashed border-red-200 bg-red-50 rounded-2xl text-center">
-          <h3 class="text-red-800 font-bold text-sm">Preview Sandbox Compiling...</h3>
-          <p class="text-red-650 text-xs mt-2 font-mono text-left bg-white p-3 border border-red-100 rounded-lg overflow-auto max-h-[250px]">\${err.message}</p>
+        <div style="padding:24px;margin:16px;border:2px dashed #fca5a5;background:#fef2f2;border-radius:12px;font-family:monospace">
+          <h3 style="color:#991b1b;font-weight:bold;margin:0 0 8px">Preview Error</h3>
+          <pre style="color:#b91c1c;font-size:11px;white-space:pre-wrap;margin:0">\${err.message}</pre>
         </div>
       \`;
     }
