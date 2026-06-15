@@ -107,23 +107,54 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
 </head>
 <body class="min-h-full bg-white text-slate-900 flex flex-col font-sans">
   <div id="root" class="flex flex-col flex-1"></div>
-  <script type="text/babel">
-    // Make lucide icons available in scope
-    const LucideReact = window.LucideReact || {};
-    try {
-      ${cleanedCode}
+  <script>
+    window.showError = function(msg) {
+      const rootEl = document.getElementById('root');
+      if (rootEl) {
+        rootEl.innerHTML = \`
+          <div style="padding:24px;margin:16px;border:2px dashed #fca5a5;background:#fef2f2;border-radius:12px;font-family:monospace">
+            <h3 style="color:#991b1b;font-weight:bold;margin:0 0 8px">Preview Error</h3>
+            <pre style="color:#b91c1c;font-size:11px;white-space:pre-wrap;margin:0">\${msg}</pre>
+          </div>
+        \`;
+      }
+    };
 
-      const root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(React.createElement(${componentName}));
-    } catch (err) {
-      console.error('LivePreview error:', err);
-      document.getElementById('root').innerHTML = \`
-        <div style="padding:24px;margin:16px;border:2px dashed #fca5a5;background:#fef2f2;border-radius:12px;font-family:monospace">
-          <h3 style="color:#991b1b;font-weight:bold;margin:0 0 8px">Preview Error</h3>
-          <pre style="color:#b91c1c;font-size:11px;white-space:pre-wrap;margin:0">\${err.message}</pre>
-        </div>
-      \`;
-    }
+    window.addEventListener('error', function(event) {
+      console.error('Iframe runtime error:', event.error);
+      window.showError(event.error ? event.error.message : event.message || 'Unknown runtime error');
+    });
+
+    // Wait for DOMContentLoaded to evaluate code
+    window.addEventListener('DOMContentLoaded', () => {
+      // Make LucideReact globally available
+      window.LucideReact = window.LucideReact || {};
+      
+      try {
+        const sourceCode = \`${cleanedCode.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`;
+        
+        // Compile using Babel Standalone
+        const compiled = Babel.transform(sourceCode, {
+          presets: ['react'],
+          filename: 'sandbox.tsx'
+        }).code;
+        
+        // Evaluate the compiled script
+        const script = document.createElement('script');
+        script.text = compiled + '\\n\\n' +
+          'try {\\n' +
+          '  const root = ReactDOM.createRoot(document.getElementById("root"));\\n' +
+          '  root.render(React.createElement(' + \`${componentName}\` + '));\\n' +
+          '} catch (renderErr) {\\n' +
+          '  console.error("Render error:", renderErr);\\n' +
+          '  window.showError(renderErr.message);\\n' +
+          '}';
+        document.body.appendChild(script);
+      } catch (compileErr) {
+        console.error('Babel compilation error:', compileErr);
+        window.showError(compileErr.message);
+      }
+    });
   </script>
 </body>
 </html>`;
@@ -164,7 +195,7 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
         >
           <iframe
             srcDoc={iframeSrcDoc}
-            sandbox="allow-scripts allow-same-origin allow-modals"
+            sandbox="allow-scripts allow-modals"
             className={cn(
               "w-full flex-1 bg-white border border-slate-200 rounded-2xl shadow-sm transition-all duration-300 ease-in-out",
               widthClasses[viewMode]

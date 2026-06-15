@@ -80,7 +80,7 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
       {/* 1. Visual Website Mockup Thumbnail (Gradient Layout) */}
       <div 
         onClick={handleOpenWorkspace}
-        className="relative h-44 bg-gradient-to-br from-indigo-50/70 via-slate-50 to-indigo-100/50 flex items-center justify-center border-b border-slate-100 cursor-pointer overflow-hidden p-4 group"
+        className="relative h-44 bg-gradient-to-br from-indigo-50/70 via-slate-50 to-indigo-100/50 flex items-center justify-center border-b border-slate-100 cursor-pointer overflow-hidden p-4 group rounded-t-2xl"
       >
         {/* Elite Glassmorphic Interface Mockup representing actual code */}
         <div className="w-full h-full border border-slate-200/80 rounded-xl bg-white/90 shadow-sm backdrop-blur-sm flex flex-col overflow-hidden group-hover:scale-[1.02] transition-transform duration-300">
@@ -147,7 +147,7 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
             </Button>
 
             {menuOpen && (
-              <div className="absolute right-0 mt-1.5 w-48 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-1">
+              <div className="absolute right-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-20 transition-all duration-200 animate-in fade-in slide-in-from-top-1">
                 <button
                   onClick={handleOpenWorkspace}
                   className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-2"
