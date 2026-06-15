@@ -76,7 +76,7 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
   };
 
   return (
-    <div className="group relative border border-slate-200/80 rounded-2xl bg-white hover:shadow-lg hover:shadow-slate-100 hover:border-slate-300 transition-all duration-300 flex flex-col h-full overflow-hidden">
+    <div className="group relative border border-slate-200/80 rounded-2xl bg-white hover:shadow-lg hover:shadow-slate-100 hover:border-slate-300 transition-all duration-300 flex flex-col h-full">
       {/* 1. Visual Website Mockup Thumbnail (Gradient Layout) */}
       <div 
         onClick={handleOpenWorkspace}
@@ -147,7 +147,7 @@ export function ProjectCard({ project, onSelect }: ProjectCardProps) {
             </Button>
 
             {menuOpen && (
-              <div className="absolute right-0 mt-1.5 w-44 bg-white border border-slate-200 rounded-xl shadow-lg py-1.5 z-20 transition-all duration-200 animate-in fade-in slide-in-from-top-1">
+              <div className="absolute right-0 mt-1.5 w-48 bg-white border border-slate-200 rounded-xl shadow-xl py-1.5 z-50 animate-in fade-in slide-in-from-top-1">
                 <button
                   onClick={handleOpenWorkspace}
                   className="w-full px-3 py-2 text-left text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-50 flex items-center gap-2"

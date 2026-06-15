@@ -164,7 +164,7 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
         >
           <iframe
             srcDoc={iframeSrcDoc}
-            sandbox="allow-scripts allow-modals"
+            sandbox="allow-scripts allow-same-origin allow-modals"
             className={cn(
               "w-full flex-1 bg-white border border-slate-200 rounded-2xl shadow-sm transition-all duration-300 ease-in-out",
               widthClasses[viewMode]
