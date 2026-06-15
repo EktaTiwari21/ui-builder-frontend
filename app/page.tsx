@@ -33,6 +33,52 @@ export default function MarketingLandingPage() {
     }
   };
 
+  // Headline container stagger variant
+  const headlineContainerVariants = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.08,
+      },
+    },
+  } as const;
+
+  // Individual word transition variant
+  const wordVariants = {
+    hidden: { opacity: 0, y: 15 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+      },
+    },
+  } as const;
+
+  // Stagger container for scroll entry elements
+  const staggerContainer = {
+    hidden: {},
+    visible: {
+      transition: {
+        staggerChildren: 0.15,
+      },
+    },
+  } as const;
+
+  // Slide-in left transition for scroll entry
+  const slideInLeft = {
+    hidden: { opacity: 0, x: -50 },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        duration: 0.6,
+        ease: "easeOut",
+      },
+    },
+  } as const;
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans antialiased overflow-x-hidden">
       {/* 1. STICKY GLASSMORPHIC NAVBAR */}
@@ -81,33 +127,62 @@ export default function MarketingLandingPage() {
         <div className="absolute top-12 left-1/4 w-80 h-80 bg-indigo-200/50 rounded-full blur-3xl opacity-40 -z-10 animate-pulse duration-[6000ms]" />
         <div className="absolute bottom-20 right-1/4 w-80 h-80 bg-emerald-200/40 rounded-full blur-3xl opacity-40 -z-10 animate-pulse duration-[8000ms]" />
 
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-center space-y-8 flex flex-col items-center"
-        >
+        <div className="text-center space-y-8 flex flex-col items-center">
           {/* Tagline Badge */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-bold shadow-sm tracking-wide select-none">
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-indigo-700 text-xs font-bold shadow-sm tracking-wide select-none"
+          >
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 animate-pulse" />
             AI-Powered Frontend Agent
-          </div>
+          </motion.div>
 
           {/* Heading */}
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-950 leading-[1.15] max-w-3xl">
-            Describe your app.{" "}
-            <span className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-emerald-500 bg-clip-text text-transparent">
-              Watch it build.
+          <motion.h1
+            variants={headlineContainerVariants}
+            initial="hidden"
+            animate="visible"
+            className="text-4xl sm:text-6xl font-extrabold tracking-tight text-slate-950 leading-[1.15] max-w-3xl"
+          >
+            {"Describe your app.".split(" ").map((word, i) => (
+              <motion.span key={`h1-1-${i}`} variants={wordVariants} className="inline-block mr-2 sm:mr-3">
+                {word}
+              </motion.span>
+            ))}
+            {" "}
+            <span className="bg-gradient-to-r from-indigo-600 via-indigo-500 to-emerald-500 bg-clip-text text-transparent inline-block">
+              {"Watch it build.".split(" ").map((word, i) => (
+                <motion.span key={`h1-2-${i}`} variants={wordVariants} className="inline-block mr-2 sm:mr-3">
+                  {word}
+                </motion.span>
+              ))}
             </span>
-          </h1>
+          </motion.h1>
 
           {/* Subtext */}
-          <p className="text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.98 + 0.3, duration: 0.6, ease: "easeOut" }}
+            className="text-base sm:text-lg text-slate-600 max-w-xl leading-relaxed"
+          >
             Generate production-ready React + Tailwind frontends from a single natural language prompt. Plan, render, edit, and download code instantly.
-          </p>
+          </motion.p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-xs sm:max-w-md">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{
+              delay: 1.5,
+              type: "spring",
+              stiffness: 100,
+              damping: 15,
+            }}
+            className="flex flex-col sm:flex-row gap-4 justify-center w-full max-w-xs sm:max-w-md"
+          >
             <Button className="px-6 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 text-sm transition duration-200 flex items-center justify-center gap-1.5 active:scale-95" asChild>
               <Link href="/dashboard">
                 <span>Start Building</span>
@@ -122,10 +197,20 @@ export default function MarketingLandingPage() {
               <span>See how it works</span>
               <ArrowDown className="w-4 h-4" />
             </Button>
-          </div>
+          </motion.div>
 
           {/* High-Fidelity UI Mockup Panel */}
-          <div className="w-full max-w-4xl pt-10 px-2 sm:px-4">
+          <motion.div
+            animate={{
+              y: [0, -6, 0],
+            }}
+            transition={{
+              duration: 3,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            className="w-full max-w-4xl pt-10 px-2 sm:px-4"
+          >
             <div className="border border-slate-200/90 rounded-3xl bg-white shadow-2xl shadow-slate-200 p-3 sm:p-4 select-none relative">
               {/* Header Bar */}
               <div className="h-7 border-b border-slate-100 bg-slate-50/50 rounded-t-xl px-3 flex items-center justify-between mb-3">
@@ -183,8 +268,8 @@ export default function MarketingLandingPage() {
                 </div>
               </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </header>
 
       {/* 3. HOW IT WORKS SECTION */}
@@ -202,9 +287,15 @@ export default function MarketingLandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12 text-center">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-12 text-center"
+          >
             {/* Step 1 */}
-            <div className="space-y-4 flex flex-col items-center">
+            <motion.div variants={slideInLeft} className="space-y-4 flex flex-col items-center">
               <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner relative">
                 <Terminal className="w-6 h-6 stroke-[1.5]" />
                 <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-md shadow-indigo-150">
@@ -215,10 +306,10 @@ export default function MarketingLandingPage() {
               <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
                 Type your design requirements in plain, natural English using the smart prompt textarea.
               </p>
-            </div>
+            </motion.div>
 
             {/* Step 2 */}
-            <div className="space-y-4 flex flex-col items-center">
+            <motion.div variants={slideInLeft} className="space-y-4 flex flex-col items-center">
               <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner relative">
                 <Cpu className="w-6 h-6 stroke-[1.5]" />
                 <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-md shadow-indigo-150">
@@ -229,10 +320,10 @@ export default function MarketingLandingPage() {
               <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
                 AI agents plan layout components and assemble responsive React and Tailwind modules in real-time.
               </p>
-            </div>
+            </motion.div>
 
             {/* Step 3 */}
-            <div className="space-y-4 flex flex-col items-center">
+            <motion.div variants={slideInLeft} className="space-y-4 flex flex-col items-center">
               <div className="w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-inner relative">
                 <Download className="w-6 h-6 stroke-[1.5]" />
                 <span className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-indigo-600 text-white flex items-center justify-center text-[10px] font-bold shadow-md shadow-indigo-150">
@@ -243,8 +334,8 @@ export default function MarketingLandingPage() {
               <p className="text-xs text-slate-500 max-w-xs leading-relaxed">
                 Review compiled structures, refine via sidebar chat, and download the entire codebase in one click.
               </p>
-            </div>
-          </div>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
@@ -263,7 +354,14 @@ export default function MarketingLandingPage() {
           {/* 2x2 Features Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Feature 1 */}
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 flex items-start gap-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md hover:border-slate-300 transition-colors duration-300 flex items-start gap-4"
+            >
               <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                 <Code2 className="w-5 h-5 stroke-[1.5]" />
               </div>
@@ -273,10 +371,17 @@ export default function MarketingLandingPage() {
                   Clean, production-ready React source code using exclusively styled Tailwind CSS utility components.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Feature 2 */}
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 flex items-start gap-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md hover:border-slate-300 transition-colors duration-300 flex items-start gap-4"
+            >
               <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                 <Eye className="w-5 h-5 stroke-[1.5]" />
               </div>
@@ -286,23 +391,37 @@ export default function MarketingLandingPage() {
                   Interactive sandboxed browser execution rendering dynamic animations and viewport transitions.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Feature 3 */}
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 flex items-start gap-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md hover:border-slate-300 transition-colors duration-300 flex items-start gap-4"
+            >
               <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                 <MessageSquare className="w-5 h-5 stroke-[1.5]" />
               </div>
               <div className="space-y-1.5">
-                <h4 className="font-bold text-slate-900 text-sm">Chat refinement</h4>
+                <h4 className="font-bold text-slate-950 text-sm">Chat refinement</h4>
                 <p className="text-xs text-slate-500 leading-relaxed">
                   Iteratively update fonts, add structures, and alter layouts by typing natural follow-up comments.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Feature 4 */}
-            <div className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 flex items-start gap-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="p-6 bg-white border border-slate-200 rounded-3xl shadow-sm hover:shadow-md hover:border-slate-300 transition-colors duration-300 flex items-start gap-4"
+            >
               <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shrink-0">
                 <Layers className="w-5 h-5 stroke-[1.5]" />
               </div>
@@ -312,13 +431,19 @@ export default function MarketingLandingPage() {
                   Package generated components directly into structured, downloadable Next.js App Router directories.
                 </p>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* 5. CTA SECTION */}
-      <section className="py-20 bg-gradient-to-br from-indigo-50 to-slate-50 border-t border-slate-200/60">
+      <motion.section
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.8 }}
+        className="py-20 bg-gradient-to-br from-indigo-50 to-slate-50 border-t border-slate-200/60"
+      >
         <div className="max-w-4xl mx-auto px-6 text-center space-y-8">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900">
             Ready to build your UI?
@@ -335,7 +460,7 @@ export default function MarketingLandingPage() {
             </Button>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* 6. FOOTER */}
       <footer className="h-16 bg-white border-t border-slate-200 flex items-center justify-center px-6">
