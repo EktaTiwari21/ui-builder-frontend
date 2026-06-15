@@ -33,15 +33,27 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
       ? lucideImportMatch[1].replace(/\s+/g, " ").trim()
       : "";
 
+    // Extract React destructured imports (like useState, useEffect)
+    const reactImportsMatch = code.match(
+      /import\s+(?:React\s*,\s*)?\{\s*([^}]+)\s*\}\s+from\s+['"]react['"]/
+    );
+    const reactImports = reactImportsMatch ? reactImportsMatch[1].trim() : "";
+
     // 2. Sanitize import statements for Babel inline script execution
     let cleanedCode = code
-      .replace(/import\s+React[^{]*from\s+['"]react['"];?/g, "")
-      .replace(/import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]react['"];?/g, "const { $1 } = React;")
+      .replace(/import\s+React\s*,\s*\{\s*[^}]+\s*\}\s+from\s+['"]react['"];?/g, "")
+      .replace(/import\s+\{\s*[^}]+\s*\}\s+from\s+['"]react['"];?/g, "")
+      .replace(/import\s+React\s+from\s+['"]react['"];?/g, "")
       .replace(/import\s+.*from\s+['"][^'"]+['"];?/g, "") // strip remaining imports
       .replace(/export\s+default\s+function/g, "function")
       .replace(/export\s+default\s+/g, "const __DefaultExport = ")
       .replace(/export\s+function/g, "function")
       .replace(/export\s+const/g, "const");
+
+    // Prepend React hooks if extracted
+    if (reactImports) {
+      cleanedCode = `const { ${reactImports} } = React;\n` + cleanedCode;
+    }
 
     // Prepend lucide icon destructure if icons were used
     if (lucideIcons) {
