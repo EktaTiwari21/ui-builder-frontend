@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Sparkles, MessageSquare, Play, HelpCircle } from "lucide-react";
 import { Navbar } from "@/components/common/Navbar";
 import { Sidebar } from "@/components/common/Sidebar";
@@ -10,14 +10,15 @@ import { useGenerationStore } from "@/lib/store/useGenerationStore";
 import { useProjectStore } from "@/lib/store/useProjectStore";
 import { useGenerate } from "@/hooks/useGenerate";
 import { AuthGuard } from "@/components/common/AuthGuard";
+import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 
 /**
- * New Project Workspace page route component.
- * Displays a landing-style prompt editor where the user can submit initial app requirements.
- * Initiates the AI generation loop via the Phase 1 mock client and redirects to `/workspace/[projectId]`.
+ * Inner component that uses searchParams.
  */
-export default function NewWorkspacePage() {
+function WorkspaceContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialPrompt = searchParams.get("prompt") || "";
   const [loading, setLoading] = useState(false);
 
   const { generate } = useGenerate();
@@ -63,8 +64,7 @@ export default function NewWorkspacePage() {
   };
 
   return (
-    <AuthGuard>
-      <div className="flex flex-col min-h-screen bg-slate-50">
+    <div className="flex flex-col min-h-screen bg-slate-50">
       {/* Navigation Header */}
       <Navbar />
 
@@ -93,7 +93,7 @@ export default function NewWorkspacePage() {
             <div className="absolute -top-12 -right-12 w-32 h-32 bg-indigo-50 rounded-full blur-2xl opacity-50" />
             <div className="absolute -bottom-12 -left-12 w-32 h-32 bg-violet-50 rounded-full blur-2xl opacity-50" />
 
-            <PromptInput onSubmit={handleGenerate} isLoading={loading} />
+            <PromptInput onSubmit={handleGenerate} isLoading={loading} initialPrompt={initialPrompt} />
           </div>
 
           {/* Feature Tips Cards Grid */}
@@ -117,6 +117,29 @@ export default function NewWorkspacePage() {
         </main>
       </div>
     </div>
+  );
+}
+
+/**
+ * New Project Workspace page route component.
+ * Displays a landing-style prompt editor where the user can submit initial app requirements.
+ * Initiates the AI generation loop via the Phase 1 mock client and redirects to `/workspace/[projectId]`.
+ */
+export default function NewWorkspacePage() {
+  return (
+    <AuthGuard>
+      <Suspense fallback={
+        <div className="flex flex-col min-h-screen bg-slate-50 items-center justify-center">
+          <div className="text-center space-y-3">
+            <LoadingSpinner size="lg" />
+            <p className="text-xs text-slate-400 font-semibold uppercase tracking-widest animate-pulse">
+              Setting up workspace...
+            </p>
+          </div>
+        </div>
+      }>
+        <WorkspaceContent />
+      </Suspense>
     </AuthGuard>
   );
 }
