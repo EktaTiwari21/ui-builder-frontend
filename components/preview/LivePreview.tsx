@@ -29,8 +29,15 @@ export function LivePreview({ code, isLoading, onCompileError, onCompileSuccess 
   const iframeSrcDoc = useMemo(() => {
     if (!code) return "";
 
+    // 0. Strip markdown code block wraps if present
+    let cleanedCode = code.trim();
+    if (cleanedCode.startsWith("```")) {
+      cleanedCode = cleanedCode.replace(/^```[a-zA-Z]*\s*\n/, "");
+    }
+    cleanedCode = cleanedCode.replace(/```$/, "").trim();
+
     // 1. Extract lucide-react imports before stripping, so we can re-inject them
-    const lucideImportMatch = code.match(
+    const lucideImportMatch = cleanedCode.match(
       /import\s+\{\s*([^}]+)\s*\}\s+from\s+['"]lucide-react['"];?/
     );
     const lucideIcons = lucideImportMatch
@@ -38,14 +45,14 @@ export function LivePreview({ code, isLoading, onCompileError, onCompileSuccess 
       : "";
 
     // Extract React destructured imports (like useState, useEffect)
-    const reactImportsMatch = code.match(
+    const reactImportsMatch = cleanedCode.match(
       /import\s+(?:React\s*,\s*)?\{\s*([^}]+)\s*\}\s+from\s+['"]react['"]/
     );
     const reactImports = reactImportsMatch ? reactImportsMatch[1].trim() : "";
 
     // 2. Sanitize import statements for Babel inline script execution
     // Using a multiline-safe regex for stripping remaining imports to support imports spanning multiple lines.
-    let cleanedCode = code
+    cleanedCode = cleanedCode
       .replace(/import\s+React\s*,\s*\{\s*[^}]+\s*\}\s+from\s+['"]react['"];?/g, "")
       .replace(/import\s+\{\s*[^}]+\s*\}\s+from\s+['"]react['"];?/g, "")
       .replace(/import\s+React\s+from\s+['"]react['"];?/g, "")
