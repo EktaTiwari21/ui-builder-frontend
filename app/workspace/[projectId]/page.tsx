@@ -42,6 +42,8 @@ export default function ProjectWorkspacePage() {
   const completeGeneration = useGenerationStore((state) => state.completeGeneration);
   const failGeneration = useGenerationStore((state) => state.failGeneration);
   const resetGeneration = useGenerationStore((state) => state.reset);
+  const markLastGenerationAsFailed = useGenerationStore((state) => state.markLastGenerationAsFailed);
+  const markLastGenerationAsSuccess = useGenerationStore((state) => state.markLastGenerationAsSuccess);
 
   const fetchProjectById = useProjectStore((state) => state.fetchProjectById);
 
@@ -230,7 +232,12 @@ export default function ProjectWorkspacePage() {
                 {/* Viewers display area */}
                 <div className="flex-1 overflow-hidden relative h-full">
                   {activeTab === "preview" ? (
-                    <LivePreview code={activeProject.generatedCode} isLoading={isGenerating} />
+                    <LivePreview
+                      code={activeProject.generatedCode}
+                      isLoading={isGenerating}
+                      onCompileError={markLastGenerationAsFailed}
+                      onCompileSuccess={markLastGenerationAsSuccess}
+                    />
                   ) : (
                     <CodeEditor code={activeProject.generatedCode} />
                   )}

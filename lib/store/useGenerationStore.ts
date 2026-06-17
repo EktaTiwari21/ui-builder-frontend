@@ -69,6 +69,17 @@ export interface GenerationStore {
    * @param message Detailed error cause
    */
   setError: (message: string) => void;
+
+  /**
+   * Updates the last generation log's status to "error" and sets the error message.
+   * @param errorMessage The detailed preview failure reason
+   */
+  markLastGenerationAsFailed: (errorMessage: string) => void;
+
+  /**
+   * Resets the last generation log's status back to "success" and clears the error.
+   */
+  markLastGenerationAsSuccess: () => void;
 }
 
 /**
@@ -195,6 +206,43 @@ export const useGenerationStore = create<GenerationStore>((set) => ({
         activeGeneration: updatedGen,
         history: [...state.history, updatedGen],
         streamStatus: "Error",
+      };
+    }),
+
+  markLastGenerationAsFailed: (errorMessage) =>
+    set((state) => {
+      if (state.history.length === 0) return {};
+      const lastIndex = state.history.length - 1;
+      const lastGen = state.history[lastIndex];
+      const updatedGen: Generation = {
+        ...lastGen,
+        status: "error",
+        error: errorMessage,
+      };
+      const newHistory = [...state.history];
+      newHistory[lastIndex] = updatedGen;
+      return {
+        history: newHistory,
+        activeGeneration: state.activeGeneration && state.activeGeneration.id === lastGen.id ? updatedGen : state.activeGeneration,
+      };
+    }),
+
+  markLastGenerationAsSuccess: () =>
+    set((state) => {
+      if (state.history.length === 0) return {};
+      const lastIndex = state.history.length - 1;
+      const lastGen = state.history[lastIndex];
+      if (lastGen.status === "success" && lastGen.error === null) return {};
+      const updatedGen: Generation = {
+        ...lastGen,
+        status: "success",
+        error: null,
+      };
+      const newHistory = [...state.history];
+      newHistory[lastIndex] = updatedGen;
+      return {
+        history: newHistory,
+        activeGeneration: state.activeGeneration && state.activeGeneration.id === lastGen.id ? updatedGen : state.activeGeneration,
       };
     }),
 }));

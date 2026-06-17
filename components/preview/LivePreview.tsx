@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { PlayCircle } from "lucide-react";
 import { useUIStore } from "@/lib/store/useUIStore";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
@@ -11,6 +11,10 @@ interface LivePreviewProps {
   code: string | null;
   /** Tracks if a generation operation is currently active */
   isLoading: boolean;
+  /** Callback fired when preview compilation or rendering encounters an error */
+  onCompileError?: (errorMessage: string) => void;
+  /** Callback fired when preview compiles and renders successfully */
+  onCompileSuccess?: () => void;
 }
 
 /**
@@ -18,7 +22,7 @@ interface LivePreviewProps {
  * Renders the interface in a sandboxed iframe with responsive width limits mapping to useUIStore.
  * Streams generated code chunks in real-time without locking workspace view during stream phase.
  */
-export function LivePreview({ code, isLoading }: LivePreviewProps) {
+export function LivePreview({ code, isLoading, onCompileError, onCompileSuccess }: LivePreviewProps) {
   const viewMode = useUIStore((state) => state.viewMode);
 
   // Compile full iframe srcDoc document containing CDNs and Babel sandbox on the fly
@@ -40,11 +44,12 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
     const reactImports = reactImportsMatch ? reactImportsMatch[1].trim() : "";
 
     // 2. Sanitize import statements for Babel inline script execution
+    // Using a multiline-safe regex for stripping remaining imports to support imports spanning multiple lines.
     let cleanedCode = code
       .replace(/import\s+React\s*,\s*\{\s*[^}]+\s*\}\s+from\s+['"]react['"];?/g, "")
       .replace(/import\s+\{\s*[^}]+\s*\}\s+from\s+['"]react['"];?/g, "")
       .replace(/import\s+React\s+from\s+['"]react['"];?/g, "")
-      .replace(/import\s+.*from\s+['"][^'"]+['"];?/g, "") // strip remaining imports
+      .replace(/import\s+[\s\S]*?from\s+['"][^'"]+['"];?/g, "") // strip remaining imports multiline-safe
       .replace(/export\s+default\s+function/g, "function")
       .replace(/export\s+default\s+/g, "const __DefaultExport = ")
       .replace(/export\s+function/g, "function")
@@ -138,7 +143,9 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
 
     window.addEventListener('error', function(event) {
       console.error('Iframe runtime error:', event.error);
-      window.showError(event.error ? event.error.message : event.message || 'Unknown runtime error');
+      const msg = event.error ? event.error.message : event.message || 'Unknown runtime error';
+      window.showError(msg);
+      window.parent.postMessage({ type: 'PREVIEW_ERROR', message: msg }, '*');
     });
 
     // Wait for DOMContentLoaded to evaluate code
@@ -151,7 +158,7 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
         
         // Compile using Babel Standalone
         const compiled = Babel.transform(sourceCode, {
-          presets: ['react'],
+          presets: [['react', { runtime: 'classic' }]],
           filename: 'sandbox.tsx'
         }).code;
         
@@ -161,14 +168,17 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
           'try {\\n' +
           '  const root = ReactDOM.createRoot(document.getElementById("root"));\\n' +
           '  root.render(React.createElement(' + \`${componentName}\` + '));\\n' +
+          '  window.parent.postMessage({ type: "PREVIEW_SUCCESS" }, "*");\\n' +
           '} catch (renderErr) {\\n' +
           '  console.error("Render error:", renderErr);\\n' +
           '  window.showError(renderErr.message);\\n' +
+          '  window.parent.postMessage({ type: "PREVIEW_ERROR", message: renderErr.message }, "*");\\n' +
           '}';
         document.body.appendChild(script);
       } catch (compileErr) {
         console.error('Babel compilation error:', compileErr);
         window.showError(compileErr.message);
+        window.parent.postMessage({ type: 'PREVIEW_ERROR', message: compileErr.message }, '*');
       }
     });
   </script>
@@ -182,6 +192,25 @@ export function LivePreview({ code, isLoading }: LivePreviewProps) {
     tablet: "max-w-[768px] shadow-md shadow-slate-100 border-x border-slate-200",
     desktop: "max-w-full",
   };
+
+  // Register listener for iframe error and success postMessage events
+  useEffect(() => {
+    const handleIframeMessage = (event: MessageEvent) => {
+      const data = event.data;
+      if (data && typeof data === "object") {
+        if (data.type === "PREVIEW_ERROR") {
+          onCompileError?.(data.message);
+        } else if (data.type === "PREVIEW_SUCCESS") {
+          onCompileSuccess?.();
+        }
+      }
+    };
+
+    window.addEventListener("message", handleIframeMessage);
+    return () => {
+      window.removeEventListener("message", handleIframeMessage);
+    };
+  }, [onCompileError, onCompileSuccess]);
 
   // Check if we are currently loading without code (initial plan phase)
   const showLoadingOverlay = isLoading && !code;
